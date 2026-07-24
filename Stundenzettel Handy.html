@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monatlicher Stundenzettel</title>
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-light: #eff6ff;
+            --border: #cbd5e1;
+            --text: #0f172a;
+            --bg-gray: #f8fafc;
+            --success: #16a34a;
+            --danger: #dc2626;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 10px;
+            background-color: #f1f5f9;
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 12px;
+            margin-bottom: 15px;
+        }
+
+        .header h1 {
+            margin: 0 0 10px 0;
+            color: var(--primary);
+            font-size: 20px;
+            text-transform: uppercase;
+        }
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 13px;
+            flex: 1;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .btn-success { background-color: var(--success); }
+        .btn-danger { background-color: var(--danger); }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+            background-color: var(--bg-gray);
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .info-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-group label {
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #475569;
+            margin-bottom: 4px;
+        }
+
+        .info-group input {
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+        }
+
+        /* ----- HANDY-KARTEN-LAYOUT (STANDARD) ----- */
+        .day-card {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .day-card.weekend {
+            background-color: #f8fafc;
+            border-left: 4px solid #94a3b8;
+        }
+
+        .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            font-size: 16px;
+            color: var(--primary);
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .day-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .input-box {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-box.full-width {
+            grid-column: span 2;
+        }
+
+        .input-box label {
+            font-size: 10px;
+            font-weight: bold;
+            color: #64748b;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+
+        .input-box input, .input-box select {
+            padding: 8px;
+            border: 1px solid #94a3b8;
+            border-radius: 6px;
+            font-size: 14px;
+            background: #ffffff;
+            color: #0f172a;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        .work-display {
+            font-weight: bold;
+            font-size: 15px;
+            color: var(--primary);
+            padding: 8px;
+            background: var(--primary-light);
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        /* Desktop/PC Ansicht als Tabelle ab 768px */
+        .desktop-table { display: none; }
+
+        @media (min-width: 768px) {
+            .mobile-cards { display: none; }
+            .desktop-table { display: table; width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+            
+            th { background-color: var(--primary); color: white; padding: 8px; font-size: 13px; }
+            td { border: 1px solid var(--border); padding: 4px; text-align: center; font-size: 13px; }
+            tr:nth-child(even) td { background-color: #f8fafc; }
+            tr.weekend td { background-color: #f1f5f9; }
+            
+            .desktop-table input, .desktop-table select {
+                width: 100%; padding: 4px; border: 1px solid var(--border); border-radius: 4px; font-size: 13px; text-align: center; box-sizing: border-box;
+            }
+        }
+
+        .summary-box {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .summary-card {
+            background-color: var(--primary-light);
+            border: 1px solid #bfdbfe;
+            border-radius: 6px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .summary-card .title { font-size: 10px; color: #1e40af; font-weight: bold; text-transform: uppercase; }
+        .summary-card .value { font-size: 16px; font-weight: bold; color: #1e3a8a; margin-top: 4px; }
+
+        .status-toast {
+            position: fixed; bottom: 20px; left: 20px; right: 20px;
+            background-color: #0f172a; color: white; padding: 12px;
+            border-radius: 6px; text-align: center; font-size: 13px; display: none; z-index: 1000;
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+            .mobile-cards { display: none !important; }
+            .desktop-table { display: table !important; width: 100%; }
+            input, select { border: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>Stundenzettel</h1>
+        <div class="button-group no-print">
+            <button class="btn btn-success" onclick="saveData()">💾 Speichern</button>
+            <button class="btn" onclick="loadData()">📂 Laden</button>
+            <button class="btn btn-danger" onclick="deleteData()">🗑️ Löschen</button>
+            <button class="btn" onclick="window.print()">🖨️ Drucken</button>
+        </div>
+    </div>
+
+    <div class="info-grid">
+        <div class="info-group">
+            <label>Name:</label>
+            <input type="text" id="empName" placeholder="Max Mustermann" onchange="autoSave()">
+        </div>
+        <div class="info-group">
+            <label>Personal-Nr.:</label>
+            <input type="text" id="empId" placeholder="12345" onchange="autoSave()">
+        </div>
+        <div class="info-group">
+            <label>Monat & Jahr:</label>
+            <input type="month" id="monthPicker" onchange="onMonthChange()">
+        </div>
+        <div class="info-group">
+            <label>Soll / Tag (Std):</label>
+            <input type="number" id="dailyTarget" value="8.0" step="0.5" onchange="calculateTotals(); autoSave();">
+        </div>
+    </div>
+
+    <!-- MOBIL: Karten-Ansicht -->
+    <div id="mobileCards" class="mobile-cards"></div>
+
+    <!-- PC: Tabellen-Ansicht -->
+    <table class="desktop-table">
+        <thead>
+            <tr>
+                <th style="width: 10%;">Datum</th>
+                <th style="width: 8%;">Tag</th>
+                <th style="width: 15%;">Beginn</th>
+                <th style="width: 15%;">Ende</th>
+                <th style="width: 12%;">Pause (Min)</th>
+                <th style="width: 12%;">Arbeitszeit</th>
+                <th style="width: 14%;">Status</th>
+                <th style="width: 14%;">Bemerkung</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+
+    <div class="summary-box">
+        <div class="summary-card">
+            <div class="title">Ist-Zeit</div>
+            <div class="value" id="totalIst">0,00 Std</div>
+        </div>
+        <div class="summary-card">
+            <div class="title">Soll-Zeit</div>
+            <div class="value" id="totalSoll">0,00 Std</div>
+        </div>
+        <div class="summary-card">
+            <div class="title">Differenz</div>
+            <div class="value" id="totalDiff">0,00 Std</div>
+        </div>
+        <div class="summary-card">
+            <div class="title">Abwesend</div>
+            <div class="value" id="totalAbsence">0 Tage</div>
+        </div>
+    </div>
+</div>
+
+<div id="statusToast" class="status-toast"></div>
+
+<script>
+    const daysOfWeek = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+
+    window.onload = function() {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        let mm = today.getMonth() + 1;
+        if (mm < 10) mm = '0' + mm;
+        document.getElementById('monthPicker').value = yyyy + '-' + mm;
+        
+        loadProfile();
+        generateLayout();
+        loadData(true);
+    };
+
+    function showToast(msg) {
+        const t = document.getElementById('statusToast');
+        t.innerText = msg; t.style.display = 'block';
+        setTimeout(() => { t.style.display = 'none'; }, 2000);
+    }
+
+    function getStorageKey() {
+        const month = document.getElementById('monthPicker').value;
+        const empId = document.getElementById('empId').value.trim() || 'default';
+        return 'stundenzettel_' + empId + '_' + month;
+    }
+
+    function onMonthChange() {
+        generateLayout();
+        loadData(true);
+    }
+
+    function generateLayout() {
+        const monthVal = document.getElementById('monthPicker').value;
+        if (!monthVal) return;
+
+        const parts = monthVal.split('-');
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10);
+        const daysInMonth = new Date(year, month, 0).getDate();
+
+        const tbody = document.getElementById('tableBody');
+        const cardsDiv = document.getElementById('mobileCards');
+        tbody.innerHTML = '';
+        cardsDiv.innerHTML = '';
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateObj = new Date(year, month - 1, day);
+            const dayOfWeekIdx = dateObj.getDay();
+            const dayName = daysOfWeek[dayOfWeekIdx];
+            const isWeekend = (dayOfWeekIdx === 0 || dayOfWeekIdx === 6);
+            const formattedDay = (day < 10 ? '0' : '') + day + '.' + (month < 10 ? '0' : '') + month + '.';
+
+            // 1. Mobile Karte erzeugen
+            const card = document.createElement('div');
+            card.className = 'day-card' + (isWeekend ? ' weekend' : '');
+            card.dataset.day = day;
+            card.innerHTML = `
+                <div class="day-header">
+                    <span>${formattedDay} (${dayName})</span>
+                    <span class="work-time-display work-time">0,00 Std</span>
+                </div>
+                <div class="day-inputs">
+                    <div class="input-box">
+                        <label>Beginn</label>
+                        <input type="time" class="start-time" onchange="syncAndCalc(this, ${day}); autoSave();">
+                    </div>
+                    <div class="input-box">
+                        <label>Ende</label>
+                        <input type="time" class="end-time" onchange="syncAndCalc(this, ${day}); autoSave();">
+                    </div>
+                    <div class="input-box">
+                        <label>Pause (Min)</label>
+                        <input type="number" class="pause-time" value="${isWeekend ? 0 : 30}" min="0" step="5" onchange="syncAndCalc(this, ${day}); autoSave();">
+                    </div>
+                    <div class="input-box">
+                        <label>Status</label>
+                        <select class="type-select" onchange="syncAndCalc(this, ${day}); autoSave();">
+                            <option value="WORK">Arbeit</option>
+                            <option value="URLAUB">Urlaub</option>
+                            <option value="KRANK">Krank</option>
+                            <option value="FEIERTAG">Feiertag</option>
+                            <option value="FREI">Frei</option>
+                        </select>
+                    </div>
+                    <div class="input-box full-width">
+                        <label>Bemerkung</label>
+                        <input type="text" class="remark" placeholder="z. B. Homeoffice" onchange="syncAndCalc(this, ${day}); autoSave();">
+                    </div>
+                </div>
+            `;
+            cardsDiv.appendChild(card);
+
+            // 2. PC Zeile erzeugen
+            const tr = document.createElement('tr');
+            if (isWeekend) tr.classList.add('weekend');
+            tr.dataset.day = day;
+            tr.innerHTML = `
+                <td>${formattedDay}</td>
+                <td>${dayName}</td>
+                <td><input type="time" class="start-time" onchange="syncAndCalc(this, ${day}); autoSave();"></td>
+                <td><input type="time" class="end-time" onchange="syncAndCalc(this, ${day}); autoSave();"></td>
+                <td><input type="number" class="pause-time" value="${isWeekend ? 0 : 30}" min="0" step="5" onchange="syncAndCalc(this, ${day}); autoSave();"></td>
+                <td class="work-time">0,00</td>
+                <td>
+                    <select class="type-select" onchange="syncAndCalc(this, ${day}); autoSave();">
+                        <option value="WORK">Arbeit</option>
+                        <option value="URLAUB">Urlaub</option>
+                        <option value="KRANK">Krank</option>
+                        <option value="FEIERTAG">Feiertag</option>
+                        <option value="FREI">Frei</option>
+                    </select>
+                </td>
+                <td><input type="text" class="remark" onchange="syncAndCalc(this, ${day}); autoSave();"></td>
+            `;
+            tbody.appendChild(tr);
+        }
+        calculateTotals();
+    }
+
+    // Synchronisiert Eingaben zwischen Handy-Karten und PC-Tabelle
+    function syncAndCalc(element, day) {
+        const isStart = element.classList.contains('start-time');
+        const isEnd = element.classList.contains('end-time');
+        const isPause = element.classList.contains('pause-time');
+        const isType = element.classList.contains('type-select');
+        const isRemark = element.classList.contains('remark');
+
+        let selector = '';
+        if (isStart) selector = '.start-time';
+        if (isEnd) selector = '.end-time';
+        if (isPause) selector = '.pause-time';
+        if (isType) selector = '.type-select';
+        if (isRemark) selector = '.remark';
+
+        const val = element.value;
+        const card = document.querySelector(`.day-card[data-day="${day}"]`);
+        const row = document.querySelector(`tr[data-day="${day}"]`);
+
+        if (card && row) {
+            card.querySelector(selector).value = val;
+            row.querySelector(selector).value = val;
+        }
+
+        calculateDay(day);
+    }
+
+    function calculateDay(day) {
+        const card = document.querySelector(`.day-card[data-day="${day}"]`);
+        const row = document.querySelector(`tr[data-day="${day}"]`);
+        if (!card || !row) return;
+
+        const startTime = card.querySelector('.start-time').value;
+        const endTime = card.querySelector('.end-time').value;
+        const pauseMin = parseFloat(card.querySelector('.pause-time').value) || 0;
+        const type = card.querySelector('.type-select').value;
+        const targetHours = parseFloat(document.getElementById('dailyTarget').value) || 0;
+
+        let durationHours = 0;
+
+        if (type === 'WORK') {
+            if (startTime && endTime) {
+                const start = new Date('1970-01-01T' + startTime + ':00');
+                const end = new Date('1970-01-01T' + endTime + ':00');
+                let diffMs = end - start;
+                if (diffMs < 0) diffMs += 24 * 60 * 60 * 1000;
+                
+                let totalMinutes = Math.max(0, (diffMs / (1000 * 60)) - pauseMin);
+                durationHours = totalMinutes / 60;
+            }
+        } else if (['URLAUB', 'KRANK', 'FEIERTAG'].includes(type)) {
+            durationHours = targetHours;
+        }
+
+        const formattedTime = durationHours.toFixed(2).replace('.', ',');
+        card.querySelector('.work-time-display').innerText = formattedTime + ' Std';
+        row.querySelector('.work-time').innerText = formattedTime;
+
+        calculateTotals();
+    }
+
+    function calculateTotals() {
+        const cards = document.querySelectorAll('.day-card');
+        const targetHoursPerDay = parseFloat(document.getElementById('dailyTarget').value) || 0;
+        
+        let totalIst = 0, totalSoll = 0, absenceDays = 0;
+
+        cards.forEach(card => {
+            const dayHeader = card.querySelector('.day-header span').innerText;
+            const isWeekend = dayHeader.includes('(Sa)') || dayHeader.includes('(So)');
+            const type = card.querySelector('.type-select').value;
+            const workStr = card.querySelector('.work-time-display').innerText.replace(' Std', '').replace(',', '.');
+            const workHours = parseFloat(workStr) || 0;
+
+            totalIst += workHours;
+            if (!isWeekend) totalSoll += targetHoursPerDay;
+            if (['URLAUB', 'KRANK'].includes(type)) absenceDays++;
+        });
+
+        const diff = totalIst - totalSoll;
+        document.getElementById('totalIst').innerText = totalIst.toFixed(2).replace('.', ',') + ' Std';
+        document.getElementById('totalSoll').innerText = totalSoll.toFixed(2).replace('.', ',') + ' Std';
+        
+        const diffEl = document.getElementById('totalDiff');
+        diffEl.innerText = (diff >= 0 ? '+' : '') + diff.toFixed(2).replace('.', ',') + ' Std';
+        diffEl.style.color = diff < 0 ? '#dc2626' : (diff > 0 ? '#16a34a' : '#1e3a8a');
+        document.getElementById('totalAbsence').innerText = absenceDays + ' Tag(e)';
+    }
+
+    function saveProfile() {
+        const profile = {
+            empName: document.getElementById('empName').value,
+            empId: document.getElementById('empId').value,
+            dailyTarget: document.getElementById('dailyTarget').value
+        };
+        localStorage.setItem('stundenzettel_profile', JSON.stringify(profile));
+    }
+
+    function loadProfile() {
+        const saved = localStorage.getItem('stundenzettel_profile');
+        if (saved) {
+            const p = JSON.parse(saved);
+            if (p.empName) document.getElementById('empName').value = p.empName;
+            if (p.empId) document.getElementById('empId').value = p.empId;
+            if (p.dailyTarget) document.getElementById('dailyTarget').value = p.dailyTarget;
+        }
+    }
+
+    function saveData(silent) {
+        saveProfile();
+        const rowsData = [];
+        const cards = document.querySelectorAll('.day-card');
+
+        cards.forEach(card => {
+            rowsData.push({
+                day: card.dataset.day,
+                startTime: card.querySelector('.start-time').value,
+                endTime: card.querySelector('.end-time').value,
+                pauseTime: card.querySelector('.pause-time').value,
+                type: card.querySelector('.type-select').value,
+                remark: card.querySelector('.remark').value
+            });
+        });
+
+        localStorage.setItem(getStorageKey(), JSON.stringify(rowsData));
+        if (!silent) showToast('✓ Daten erfolgreich gespeichert!');
+    }
+
+    function autoSave() { saveData(true); }
+
+    function loadData(silent) {
+        const savedData = localStorage.getItem(getStorageKey());
+        if (!savedData) return;
+
+        const rowsData = JSON.parse(savedData);
+        rowsData.forEach(data => {
+            const card = document.querySelector(`.day-card[data-day="${data.day}"]`);
+            if (card) {
+                card.querySelector('.start-time').value = data.startTime || '';
+                card.querySelector('.end-time').value = data.endTime || '';
+                card.querySelector('.pause-time').value = data.pauseTime !== undefined ? data.pauseTime : 30;
+                card.querySelector('.type-select').value = data.type || 'WORK';
+                card.querySelector('.remark').value = data.remark || '';
+                syncAndCalc(card.querySelector('.start-time'), data.day);
+            }
+        });
+        if (!silent) showToast('✓ Daten geladen!');
+    }
+
+    function deleteData() {
+        if (confirm('Daten für diesen Monat löschen?')) {
+            localStorage.removeItem(getStorageKey());
+            generateLayout();
+            showToast('Daten gelöscht.');
+        }
+    }
+</script>
+</body>
+</html>
