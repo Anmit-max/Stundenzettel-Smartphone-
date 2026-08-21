@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1e3a8a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Zeitnachweis App</title>
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-dark: #0f172a;
+            --primary-light: #eff6ff;
+            --accent: #2563eb;
+            --border: #cbd5e1;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --bg-body: #f8fafc;
+            --card-bg: #ffffff;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --radius-sm: 6px;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-body);
+            color: var(--text);
+            padding-bottom: 90px;
+        }
+
+        /* App Header Bar */
+        .app-header {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+            color: white;
+            padding: 16px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+        }
+
+        .app-header .header-content {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .app-header h1 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .app-header h1 span { font-size: 20px; }
+
+        .header-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-icon {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-icon:active {
+            transform: scale(0.96);
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        /* Container & Cards */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        .info-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .info-group label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .info-group input, .info-group select {
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            background: #f8fafc;
+            color: var(--text);
+            font-weight: 500;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .info-group input:focus, .info-group select:focus {
+            border-color: var(--accent);
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+
+        /* Summary Dashboard */
+        .summary-dashboard {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .summary-card {
+            background: var(--card-bg);
+            border: 1px solid #e2e8f0;
+            border-radius: var(--radius-md);
+            padding: 10px 8px;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .summary-card .title {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .summary-card .value {
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--primary);
+            margin-top: 2px;
+        }
+
+        /* Time Table Container */
+        .time-table-container {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th {
+            background-color: #f1f5f9;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 11px;
+            padding: 10px 8px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            border-bottom: 1px solid #f1f5f9;
+            padding: 6px;
+            text-align: center;
+        }
+
+        tr.weekend { background-color: #f8fafc; color: #94a3b8; }
+
+        input[type="time"], input[type="text"], input[type="number"], select.type-select {
+            width: 100%;
+            border: 1px solid var(--border);
+            background: #ffffff;
+            text-align: center;
+            font-family: inherit;
+            font-size: 13px;
+            padding: 8px 4px;
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            outline: none;
+        }
+
+        input[type="time"]:focus, input[type="text"]:focus, input[type="number"]:focus, select.type-select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+        }
+
+        .pause-display {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .work-time { font-weight: 700; color: var(--primary); }
+
+        /* Signature area */
+        .signature-area {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-top: 25px;
+            padding-top: 10px;
+        }
+
+        .signature-line {
+            border-top: 1px solid var(--text);
+            text-align: center;
+            padding-top: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        /* Mobile Bottom Nav Bar */
+        .mobile-bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid #e2e8f0;
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 999;
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
+        }
+
+        .bar-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 4px 12px;
+            border-radius: var(--radius-sm);
+        }
+
+        .bar-btn span.icon { font-size: 18px; }
+
+        /* Toast */
+        .status-toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--primary-dark);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            box-shadow: var(--shadow-md);
+            font-size: 13px;
+            font-weight: 600;
+            display: none;
+            z-index: 10000;
+        }
+
+        @media (max-width: 640px) {
+            body { padding-bottom: 85px; }
+            .container { padding: 12px 10px; }
+            .summary-dashboard { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .summary-card .value { font-size: 16px; }
+            th { font-size: 10px; padding: 6px 2px; }
+            td { padding: 4px 2px; }
+            input[type="time"], input[type="text"], input[type="number"], select.type-select {
+                font-size: 12px;
+                padding: 6px 2px;
+            }
+        }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .container { max-width: 100%; padding: 0; }
+            .no-print, .app-header, .mobile-bottom-bar, .status-toast { display: none !important; }
+            .card, .time-table-container { box-shadow: none; border: none; padding: 0; }
+            input, select { border: none !important; appearance: none; -webkit-appearance: none; background: transparent !important; }
+            .summary-dashboard { grid-template-columns: repeat(5, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- App Header -->
+<header class="app-header">
+    <div class="header-content">
+        <h1><span>⏱️</span> Zeitnachweis</h1>
+        <div class="header-actions no-print">
+            <button class="btn-icon" onclick="saveData()">💾 Speichern</button>
+            <button class="btn-icon" onclick="window.print()">🖨️ Drucken</button>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+
+    <!-- Stammdaten Card -->
+    <div class="card no-print">
+        <div class="section-title">👤 Stammdaten & Arbeitsmodell</div>
+        <div class="info-grid">
+            <div class="info-group">
+                <label>Mitarbeiter Name</label>
+                <input type="text" id="empName" placeholder="Max Mustermann" onchange="autoSave()">
+            </div>
+            <div class="info-group">
+                <label>Personal-Nr.</label>
+                <input type="text" id="empId" placeholder="12345" onchange="autoSave()">
+            </div>
+            <div class="info-group">
+                <label>Monat & Jahr</label>
+                <input type="month" id="monthPicker" onchange="onMonthChange()">
+            </div>
+            <div class="info-group">
+                <label>Abteilung</label>
+                <input type="text" id="dept" placeholder="z. B. Logistik" onchange="autoSave()">
+            </div>
+            <div class="info-group">
+                <label>Soll-Std / Arbeitstag</label>
+                <input type="number" id="dailyTarget" value="0" step="0.5" min="0" onchange="calculateAllRows(); calculateTotals(); autoSave();">
+            </div>
+            <div class="info-group">
+                <label>Übertrag Vormonat (Std)</label>
+                <input type="number" id="prevMonthCarryover" value="0.00" step="0.25" placeholder="0.00" onchange="calculateTotals(); autoSave();">
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Summary Dashboard -->
+    <div class="summary-dashboard">
+        <div class="summary-card">
+            <div class="title">Ist-Zeit</div>
+            <div class="value" id="totalIst">0,00 Std</div>
+        </div>
+        <div class="summary-card">
+            <div class="title">Soll-Zeit</div>
+            <div class="value" id="totalSoll">0,00 Std</div>
+        </div>
+        <div class="summary-card">
+            <div class="title">Diff. Monat</div>
+            <div class="value" id="totalDiff">0,00 Std</div>
+        </div>
+        <div class="summary-card">
+            <div class="title">Gesamt-Saldo</div>
+            <div class="value" id="totalSaldo">0,00 Std</div>
+        </div>
+        <div class="summary-card">
+            <div class="title">Urlaub / Krank</div>
+            <div class="value" id="totalAbsence">0 Tage</div>
+        </div>
+    </div>
+
+    <!-- Zeiterfassung Table Card -->
+    <div class="time-table-container">
+        <table id="timeTable">
+            <thead>
+                <tr>
+                    <th style="width: 11%;">Datum</th>
+                    <th style="width: 8%;">Tag</th>
+                    <th style="width: 15%;">Beginn</th>
+                    <th style="width: 15%;">Ende</th>
+                    <th style="width: 11%;">Pause</th>
+                    <th style="width: 11%;">Std.</th>
+                    <th style="width: 15%;">Status</th>
+                    <th style="width: 14%;">Notiz</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Dynamisch erzeugte Tage -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Unterschriftenbereich -->
+    <div class="signature-area">
+        <div>
+            <div style="height: 35px;"></div>
+            <div class="signature-line">Datum & Unterschrift Mitarbeiter/in</div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Mobile Bottom Bar -->
+<div class="mobile-bottom-bar no-print">
+    <button class="bar-btn" onclick="saveData()">
+        <span class="icon">💾</span>
+        <span>Speichern</span>
+    </button>
+    <button class="bar-btn" onclick="loadData()">
+        <span class="icon">📂</span>
+        <span>Laden</span>
+    </button>
+    <button class="bar-btn" onclick="window.print()">
+        <span class="icon">📄</span>
+        <span>PDF / Druck</span>
+    </button>
+    <button class="bar-btn" style="color: var(--danger);" onclick="deleteData()">
+        <span class="icon">🗑️</span>
+        <span>Löschen</span>
+    </button>
+</div>
+
+<div id="statusToast" class="status-toast"></div>
+
+<script>
+    const daysOfWeek = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+
+    window.onload = function() {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        let mm = today.getMonth() + 1;
+        if (mm < 10) mm = '0' + mm;
+        document.getElementById('monthPicker').value = yyyy + '-' + mm;
+        
+        loadProfile();
+        generateTable();
+        loadData(true);
+    };
+
+    function showToast(message) {
+        const toast = document.getElementById('statusToast');
+        toast.innerText = message;
+        toast.style.display = 'block';
+        setTimeout(function() { toast.style.display = 'none'; }, 2200);
+    }
+
+    function getStorageKey(customMonth) {
+        const month = customMonth || document.getElementById('monthPicker').value;
+        const empId = document.getElementById('empId').value.trim() || 'default';
+        return 'zeitnachweis_app_' + empId + '_' + month;
+    }
+
+    function getPreviousMonthString(currentMonthVal) {
+        if (!currentMonthVal) return null;
+        const parts = currentMonthVal.split('-');
+        let year = parseInt(parts[0], 10);
+        let month = parseInt(parts[1], 10);
+
+        month--;
+        if (month < 1) {
+            month = 12;
+            year--;
+        }
+        return year + '-' + (month < 10 ? '0' + month : month);
+    }
+
+    function calculateMonthSaldo(monthVal) {
+        const key = getStorageKey(monthVal);
+        const savedData = localStorage.getItem(key);
+        if (!savedData) return 0;
+
+        try {
+            const parsed = JSON.parse(savedData);
+            let rowsData = [];
+            let prevCarryover = 0;
+
+            if (Array.isArray(parsed)) {
+                rowsData = parsed;
+            } else {
+                rowsData = parsed.rows || [];
+                prevCarryover = parseFloat(parsed.prevCarryover) || 0;
+            }
+
+            const targetHoursPerDay = parseFloat(document.getElementById('dailyTarget').value) || 0;
+            let totalIst = 0;
+            let totalSoll = 0;
+
+            const parts = monthVal.split('-');
+            const year = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10);
+
+            rowsData.forEach(function(item, index) {
+                const day = index + 1;
+                const dateObj = new Date(year, month - 1, day);
+                const dayOfWeekIdx = dateObj.getDay();
+                const isWeekend = (dayOfWeekIdx === 0 || dayOfWeekIdx === 6);
+
+                let durationHours = 0;
+                const type = item.type || 'WORK';
+
+                if (type === 'WORK') {
+                    if (item.startTime && item.endTime) {
+                        const start = new Date('1970-01-01T' + item.startTime + ':00');
+                        const end = new Date('1970-01-01T' + item.endTime + ':00');
+                        let diffMs = end - start;
+                        if (diffMs < 0) diffMs += 24 * 60 * 60 * 1000;
+                        let rawWorkHours = diffMs / (1000 * 60 * 60);
+
+                        let pauseMin = 0;
+                        if (rawWorkHours > 9) pauseMin = 45;
+                        else if (rawWorkHours > 6) pauseMin = 30;
+
+                        let totalMinutes = Math.max(0, (diffMs / (1000 * 60)) - pauseMin);
+                        durationHours = totalMinutes / 60;
+                    }
+                } else if (type === 'URLAUB' || type === 'KRANK' || type === 'FEIERTAG') {
+                    durationHours = targetHoursPerDay;
+                }
+
+                totalIst += durationHours;
+
+                if (!isWeekend && type !== 'FREI') {
+                    totalSoll += targetHoursPerDay;
+                }
+            });
+
+            return (totalIst - totalSoll) + prevCarryover;
+        } catch(e) {
+            return 0;
+        }
+    }
+
+    function onMonthChange() {
+        generateTable();
+        loadData(true);
+    }
+
+    function generateTable() {
+        const monthVal = document.getElementById('monthPicker').value;
+        if (!monthVal) return;
+
+        const parts = monthVal.split('-');
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10);
+        
+        const daysInMonth = new Date(year, month, 0).getDate();
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateObj = new Date(year, month - 1, day);
+            const dayOfWeekIdx = dateObj.getDay();
+            const dayName = daysOfWeek[dayOfWeekIdx];
+            const isWeekend = (dayOfWeekIdx === 0 || dayOfWeekIdx === 6);
+
+            const row = document.createElement('tr');
+            if (isWeekend) row.classList.add('weekend');
+            row.dataset.day = day;
+
+            const formattedDay = day < 10 ? '0' + day : day;
+            const formattedMonth = month < 10 ? '0' + month : month;
+
+            row.innerHTML = 
+                '<td>' + formattedDay + '.' + formattedMonth + '.</td>' +
+                '<td><b>' + dayName + '</b></td>' +
+                '<td><input type="time" class="start-time" onchange="calculateRow(this); autoSave();"></td>' +
+                '<td><input type="time" class="end-time" onchange="calculateRow(this); autoSave();"></td>' +
+                '<td><span class="pause-display">0 Min</span></td>' +
+                '<td class="work-time">0,00</td>' +
+                '<td>' +
+                    '<select class="type-select" onchange="calculateRow(this); autoSave();">' +
+                        '<option value="WORK">Arbeit</option>' +
+                        '<option value="URLAUB">Urlaub</option>' +
+                        '<option value="KRANK">Krank</option>' +
+                        '<option value="FEIERTAG">Feiertag</option>' +
+                        '<option value="FREI">Frei</option>' +
+                    '</select>' +
+                '</td>' +
+                '<td><input type="text" class="remark" placeholder="" style="text-align:left;" onchange="autoSave();"></td>';
+            
+            tbody.appendChild(row);
+        }
+        calculateTotals();
+    }
+
+    function calculateRow(element) {
+        const row = element.closest('tr');
+        const startTime = row.querySelector('.start-time').value;
+        const endTime = row.querySelector('.end-time').value;
+        const type = row.querySelector('.type-select').value;
+        const pauseDisplay = row.querySelector('.pause-display');
+        const workTimeTd = row.querySelector('.work-time');
+        const targetHours = parseFloat(document.getElementById('dailyTarget').value) || 0;
+
+        let durationHours = 0;
+        let pauseMin = 0;
+
+        if (type === 'WORK') {
+            if (startTime && endTime) {
+                const start = new Date('1970-01-01T' + startTime + ':00');
+                const end = new Date('1970-01-01T' + endTime + ':00');
+                let diffMs = end - start;
+                if (diffMs < 0) diffMs += 24 * 60 * 60 * 1000;
+                
+                let rawWorkHours = diffMs / (1000 * 60 * 60);
+
+                if (rawWorkHours > 9) {
+                    pauseMin = 45;
+                } else if (rawWorkHours > 6) {
+                    pauseMin = 30;
+                } else {
+                    pauseMin = 0;
+                }
+
+                let totalMinutes = Math.max(0, (diffMs / (1000 * 60)) - pauseMin);
+                durationHours = totalMinutes / 60;
+            }
+        } else if (type === 'URLAUB' || type === 'KRANK' || type === 'FEIERTAG') {
+            durationHours = targetHours;
+            pauseMin = 0;
+        } else {
+            durationHours = 0;
+            pauseMin = 0;
+        }
+
+        pauseDisplay.innerText = pauseMin + ' Min';
+        workTimeTd.innerText = durationHours.toFixed(2).replace('.', ',');
+        calculateTotals();
+    }
+
+    function calculateAllRows() {
+        const rows = document.querySelectorAll('#tableBody tr');
+        rows.forEach(function(row) {
+            const selectElement = row.querySelector('.type-select');
+            if (selectElement) {
+                calculateRow(selectElement);
+            }
+        });
+    }
+
+    function calculateTotals() {
+        const rows = document.querySelectorAll('#tableBody tr');
+        const targetHoursPerDay = parseFloat(document.getElementById('dailyTarget').value) || 0;
+        const prevCarryover = parseFloat(document.getElementById('prevMonthCarryover').value) || 0;
+        
+        let totalIst = 0;
+        let totalSoll = 0;
+        let absenceDays = 0;
+
+        rows.forEach(function(row) {
+            const dayName = row.children[1].innerText;
+            const isWeekend = (dayName === 'Sa' || dayName === 'So');
+            const type = row.querySelector('.type-select').value;
+            const workTimeStr = row.querySelector('.work-time').innerText.replace(',', '.');
+            const workHours = parseFloat(workTimeStr) || 0;
+
+            totalIst += workHours;
+
+            if (!isWeekend && type !== 'FREI') {
+                totalSoll += targetHoursPerDay;
+            }
+
+            if (type === 'URLAUB' || type === 'KRANK') {
+                absenceDays++;
+            }
+        });
+
+        const diff = totalIst - totalSoll;
+        const totalSaldo = diff + prevCarryover;
+
+        document.getElementById('totalIst').innerText = totalIst.toFixed(2).replace('.', ',') + ' Std';
+        document.getElementById('totalSoll').innerText = totalSoll.toFixed(2).replace('.', ',') + ' Std';
+        
+        const diffElement = document.getElementById('totalDiff');
+        diffElement.innerText = (diff >= 0 ? '+' : '') + diff.toFixed(2).replace('.', ',') + ' Std';
+        diffElement.style.color = Math.abs(diff) < 0.01 ? '#1e3a8a' : (diff < 0 ? '#dc2626' : '#16a34a');
+
+        const saldoElement = document.getElementById('totalSaldo');
+        saldoElement.innerText = (totalSaldo >= 0 ? '+' : '') + totalSaldo.toFixed(2).replace('.', ',') + ' Std';
+        saldoElement.style.color = Math.abs(totalSaldo) < 0.01 ? '#1e3a8a' : (totalSaldo < 0 ? '#dc2626' : '#16a34a');
+
+        document.getElementById('totalAbsence').innerText = absenceDays + ' Tag(e)';
+    }
+
+    function saveProfile() {
+        const profile = {
+            empName: document.getElementById('empName').value,
+            empId: document.getElementById('empId').value,
+            dept: document.getElementById('dept').value,
+            dailyTarget: document.getElementById('dailyTarget').value
+        };
+        localStorage.setItem('zeitnachweis_app_profile', JSON.stringify(profile));
+    }
+
+    function loadProfile() {
+        const savedProfile = localStorage.getItem('zeitnachweis_app_profile');
+        if (savedProfile) {
+            const profile = JSON.parse(savedProfile);
+            if (profile.empName) document.getElementById('empName').value = profile.empName;
+            if (profile.empId) document.getElementById('empId').value = profile.empId;
+            if (profile.dept) document.getElementById('dept').value = profile.dept;
+            if (profile.dailyTarget !== undefined) document.getElementById('dailyTarget').value = profile.dailyTarget;
+        }
+    }
+
+    function saveData(silent) {
+        saveProfile();
+        
+        const rowsData = [];
+        const rows = document.querySelectorAll('#tableBody tr');
+
+        rows.forEach(function(row) {
+            rowsData.push({
+                day: row.dataset.day,
+                startTime: row.querySelector('.start-time').value,
+                endTime: row.querySelector('.end-time').value,
+                type: row.querySelector('.type-select').value,
+                remark: row.querySelector('.remark').value
+            });
+        });
+
+        const monthData = {
+            prevCarryover: document.getElementById('prevMonthCarryover').value,
+            rows: rowsData
+        };
+
+        const key = getStorageKey();
+        localStorage.setItem(key, JSON.stringify(monthData));
+
+        if (!silent) {
+            showToast('✓ Erfassungen erfolgreich gespeichert!');
+        }
+    }
+
+    function autoSave() {
+        saveData(true);
+    }
+
+    function loadData(silent) {
+        const key = getStorageKey();
+        const savedData = localStorage.getItem(key);
+        const currentMonthVal = document.getElementById('monthPicker').value;
+        const prevMonthVal = getPreviousMonthString(currentMonthVal);
+
+        if (!savedData) {
+            const calculatedCarryover = calculateMonthSaldo(prevMonthVal);
+            document.getElementById('prevMonthCarryover').value = calculatedCarryover.toFixed(2);
+            calculateTotals();
+            if (!silent) {
+                showToast('Keine gespeicherten Daten für diesen Monat.');
+            }
+            return;
+        }
+
+        const parsed = JSON.parse(savedData);
+        let rowsData = [];
+
+        if (Array.isArray(parsed)) {
+            rowsData = parsed;
+            const calculatedCarryover = calculateMonthSaldo(prevMonthVal);
+            document.getElementById('prevMonthCarryover').value = calculatedCarryover.toFixed(2);
+        } else {
+            rowsData = parsed.rows || [];
+            if (parsed.prevCarryover !== undefined && parsed.prevCarryover !== null && parsed.prevCarryover !== "") {
+                document.getElementById('prevMonthCarryover').value = parseFloat(parsed.prevCarryover).toFixed(2);
+            } else {
+                const calculatedCarryover = calculateMonthSaldo(prevMonthVal);
+                document.getElementById('prevMonthCarryover').value = calculatedCarryover.toFixed(2);
+            }
+        }
+
+        const rows = document.querySelectorAll('#tableBody tr');
+
+        rows.forEach(function(row, index) {
+            const data = rowsData[index];
+            if (data) {
+                row.querySelector('.start-time').value = data.startTime || '';
+                row.querySelector('.end-time').value = data.endTime || '';
+                row.querySelector('.type-select').value = data.type || 'WORK';
+                row.querySelector('.remark').value = data.remark || '';
+                calculateRow(row.querySelector('.start-time'));
+            }
+        });
+
+        calculateTotals();
+        if (!silent) {
+            showToast('✓ Daten erfolgreich geladen!');
+        }
+    }
+
+    function deleteData() {
+        const key = getStorageKey();
+        if (confirm('Möchten Sie die Einträge für diesen Monat wirklich löschen?')) {
+            localStorage.removeItem(key);
+            generateTable();
+            loadData(true);
+            showToast('Einträge wurden zurückgesetzt.');
+        }
+    }
+</script>
+
+</body>
+</html>
