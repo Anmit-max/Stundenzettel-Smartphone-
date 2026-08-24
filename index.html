@@ -166,7 +166,7 @@
         /* Summary Dashboard */
         .summary-dashboard {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
+            grid-template-columns: repeat(6, 1fr);
             gap: 8px;
             margin-bottom: 16px;
         }
@@ -328,7 +328,7 @@
         @media (max-width: 640px) {
             body { padding-bottom: 85px; }
             .container { padding: 12px 10px; }
-            .summary-dashboard { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .summary-dashboard { grid-template-columns: repeat(3, 1fr); gap: 8px; }
             .summary-card .value { font-size: 16px; }
             th { font-size: 10px; padding: 6px 2px; }
             td { padding: 4px 2px; }
@@ -344,7 +344,7 @@
             .no-print, .app-header, .mobile-bottom-bar, .status-toast { display: none !important; }
             .card, .time-table-container { box-shadow: none; border: none; padding: 0; }
             input, select { border: none !important; appearance: none; -webkit-appearance: none; background: transparent !important; }
-            .summary-dashboard { grid-template-columns: repeat(5, 1fr); }
+            .summary-dashboard { grid-template-columns: repeat(6, 1fr); }
         }
     </style>
 </head>
@@ -413,8 +413,12 @@
             <div class="value" id="totalSaldo">0,00 Std</div>
         </div>
         <div class="summary-card">
-            <div class="title">Urlaub / Krank</div>
-            <div class="value" id="totalAbsence">0 Tage</div>
+            <div class="title">Urlaub</div>
+            <div class="value" id="totalUrlaub">0 Tage</div>
+        </div>
+        <div class="summary-card">
+            <div class="title">Krank</div>
+            <div class="value" id="totalKrank">0 Tage</div>
         </div>
     </div>
 
@@ -694,7 +698,8 @@
         
         let totalIst = 0;
         let totalSoll = 0;
-        let absenceDays = 0;
+        let urlaubDays = 0;
+        let krankDays = 0;
 
         rows.forEach(function(row) {
             const dayName = row.children[1].innerText;
@@ -709,8 +714,10 @@
                 totalSoll += targetHoursPerDay;
             }
 
-            if (type === 'URLAUB' || type === 'KRANK') {
-                absenceDays++;
+            if (type === 'URLAUB') {
+                urlaubDays++;
+            } else if (type === 'KRANK') {
+                krankDays++;
             }
         });
 
@@ -728,7 +735,8 @@
         saldoElement.innerText = (totalSaldo >= 0 ? '+' : '') + totalSaldo.toFixed(2).replace('.', ',') + ' Std';
         saldoElement.style.color = Math.abs(totalSaldo) < 0.01 ? '#1e3a8a' : (totalSaldo < 0 ? '#dc2626' : '#16a34a');
 
-        document.getElementById('totalAbsence').innerText = absenceDays + ' Tag(e)';
+        document.getElementById('totalUrlaub').innerText = urlaubDays + ' Tag(e)';
+        document.getElementById('totalKrank').innerText = krankDays + ' Tag(e)';
     }
 
     function saveProfile() {
@@ -850,6 +858,3 @@
 
 </body>
 </html>
-
-zeitnachweis_app.html
-zeitnachweis_app.html wird angezeigt.
