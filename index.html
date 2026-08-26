@@ -529,9 +529,21 @@
 
             if (Array.isArray(parsed)) {
                 rowsData = parsed;
+                // Falls Vormonatsdaten in älterem Format vorliegen, Vormonat abfragen
+                const prevMonth = getPreviousMonthString(monthVal);
+                if (prevMonth) {
+                    prevCarryover = calculateMonthSaldo(prevMonth);
+                }
             } else {
                 rowsData = parsed.rows || [];
-                prevCarryover = parseFloat(parsed.prevCarryover) || 0;
+                if (parsed.prevCarryover !== undefined && parsed.prevCarryover !== null && parsed.prevCarryover !== "") {
+                    prevCarryover = parseFloat(parsed.prevCarryover) || 0;
+                } else {
+                    const prevMonth = getPreviousMonthString(monthVal);
+                    if (prevMonth) {
+                        prevCarryover = calculateMonthSaldo(prevMonth);
+                    }
+                }
             }
 
             const targetHoursPerDay = parseFloat(document.getElementById('dailyTarget').value) || 0;
