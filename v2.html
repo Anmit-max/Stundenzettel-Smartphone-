@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1e3a8a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Zeitnachweis App</title>
+    
+    <!-- html2pdf Bibliothek für die PDF-Erzeugung auf Mobilgeräten -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-dark: #0f172a;
+            --primary-light: #eff6ff;
+            --accent: #2563eb;
+            --border: #cbd5e1;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --bg-body: #f8fafc;
+            --card-bg: #ffffff;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --radius-sm: 6px;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-body);
+            color: var(--text);
+            padding-bottom: 90px;
+        }
+
+        /* App Header Bar */
+        .app-header {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+            color: white;
+            padding: 16px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+        }
+
+        .app-header .header-content {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .app-header h1 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .app-header h1 span { font-size: 20px; }
+
+        .header-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-icon {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-icon:active {
+            transform: scale(0.96);
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .btn-accent {
+            background: var(--success);
+        }
+
+        /* Container & Cards */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        .info-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .info-group label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .info-group input, .info-group select {
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            background: #f8fafc;
+            color: var(--text);
+            font-weight: 500;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .info-group input:focus, .info-group select:focus {
+            border-color: var(--accent);
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+
+        /* Summary Dashboard */
+        .summary-dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .summary-card {
+            background: var(--card-bg);
+            border: 1px solid #e2e8f0;
+            border-radius: var(--radius-md);
+            padding: 10px 8px;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .summary-card.highlight {
+            background: #f0fdf4;
+            border-color: #bbf7d0;
+        }
+
+        .summary-card .title {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .summary-card .value {
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--primary);
+            margin-top: 2px;
+        }
+
+        /* Time Table Container */
+        .time-table-container {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th {
+            background-color: #f1f5f9;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 11px;
+            padding: 10px 8px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            border-bottom: 1px solid #f1f5f9;
+            padding: 6px;
+            text-align: center;
+        }
+
+        tr.weekend { background-color: #f8fafc; color: #94a3b8; }
+
+        input[type="time"], input[type="text"], input[type="number"], input[type="date"], select.type-select {
+            width: 100%;
+            border: 1px solid var(--border);
+            background: #ffffff;
+            text-align: center;
+            font-family: inherit;
+            font-size: 13px;
+            padding: 8px 4px;
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            outline: none;
+        }
+
+        input[type="time"]:focus, input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus, select.type-select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+        }
+
+        .pause-display {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .work-time { font-weight: 700; color: var(--primary); }
+
+        /* Signature area */
+        .signature-card {
+            margin-top: 16px;
+        }
+
+        .signature-grid {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 16px;
+            align-items: end;
+        }
+
+        .signature-canvas-container {
+            position: relative;
+            border: 1px dashed var(--border);
+            border-radius: var(--radius-md);
+            background: #f8fafc;
+            touch-action: none;
+        }
+
+        #sigCanvas {
+            width: 100
