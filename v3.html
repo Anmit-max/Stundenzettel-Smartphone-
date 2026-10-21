@@ -115,20 +115,21 @@
         <table id="timeTable">
             <thead>
                 <tr>
-                    <th style="width: 14%;">Datum</th>
-                    <th style="width: 9%;">Tag</th>
-                    <th style="width: 16%;">Beginn</th>
-                    <th style="width: 16%;">Ende</th>
-                    <th style="width: 12%;">Pause</th>
-                    <th style="width: 13%;">Std.</th>
-                    <th style="width: 20%;">Status</th>
+                    <th style="width: 12%;">Datum</th>
+                    <th style="width: 8%;">Tag</th>
+                    <th style="width: 14%;">Beginn</th>
+                    <th style="width: 14%;">Ende</th>
+                    <th style="width: 10%;">Pause</th>
+                    <th style="width: 11%;">Std.</th>
+                    <th style="width: 16%;">Status</th>
+                    <th style="width: 15%;">Notiz</th>
                 </tr>
             </thead>
             <tbody id="tableBody"></tbody>
         </table>
     </div>
     
-    <!-- UNTERSCHRIFTEN- KARTE (CANVAS NOTIZFELD) VOLLSTÄNDIG WIEDER DA -->
+    <!-- UNTERSCHRIFTEN- KARTE -->
     <div class="card signature-card">
         <div class="section-title">✍ Unterschrift</div>
         <div class="signature-grid">
@@ -303,11 +304,12 @@
             const dt = new Date(y, mo - 1, d), isWk = (dt.getDay() === 0 || dt.getDay() === 6);
             const row = document.createElement('tr'); if (isWk) row.classList.add('weekend'); row.dataset.day = d;
             
-            let sVal = '', eVal = '', tVal = 'WORK';
+            let sVal = '', eVal = '', tVal = 'WORK', rVal = '';
             if (savedData && savedData.rows && savedData.rows[d - 1]) {
                 sVal = savedData.rows[d - 1].startTime || '';
                 eVal = savedData.rows[d - 1].endTime || '';
                 tVal = savedData.rows[d - 1].type || 'WORK';
+                rVal = savedData.rows[d - 1].remark || '';
             }
 
             row.innerHTML = '<td>' + (d < 10 ? '0' + d : d) + '.' + (mo < 10 ? '0' + mo : mo) + '.</td>' +
@@ -321,7 +323,8 @@
                 '<option value="KRANK" ' + (tVal === 'KRANK' ? 'selected' : '') + '>Krank</option>' +
                 '<option value="FEIERTAG" ' + (tVal === 'FEIERTAG' ? 'selected' : '') + '>Feiertag</option>' +
                 '<option value="FREI" ' + (tVal === 'FREI' ? 'selected' : '') + '>Frei</option>' +
-                '</select></td>';
+                '</select></td>' +
+                '<td><input type="text" class="row-remark" value="' + rVal + '" placeholder="Notiz" onchange="autoSave()"></td>';
             tbody.appendChild(row);
         }
 
@@ -348,7 +351,7 @@
         if ((type === 'WORK' || type === 'FREI') && s && e) {
             const st = new Date('1970-01-01T' + s + ':00'), et = new Date('1970-01-01T' + e + ':00');
             let diff = et - st; if (diff < 0) diff += 86400000;
-            let raw = diff / 3600000, pause = raw > 9 ? 45 : (raw > 6 ? 30 : 0);
+            let raw = diff / 3600000; pause = raw > 9 ? 45 : (raw > 6 ? 30 : 0);
             dur = Math.max(0, (diff / 60000) - pause) / 60;
         } else if (['URLAUB', 'KRANK', 'FEIERTAG'].includes(type)) { dur = target; }
         pDisp.innerText = pause + 'm'; wTd.innerText = dur.toFixed(2).replace('.', ','); calculateTotals();
@@ -401,7 +404,13 @@
         if (!isInitialized) return;
         saveProfile();
         let rows = []; document.querySelectorAll('#tableBody tr').forEach(r => {
-            rows.push({ day: r.dataset.day, startTime: r.querySelector('.start-time').value, endTime: r.querySelector('.end-time').value, type: r.querySelector('.type-select').value, remark: '' });
+            rows.push({ 
+                day: r.dataset.day, 
+                startTime: r.querySelector('.start-time').value, 
+                endTime: r.querySelector('.end-time').value, 
+                type: r.querySelector('.type-select').value, 
+                remark: r.querySelector('.row-remark').value 
+            });
         });
         localStorage.setItem(getStorageKey(), JSON.stringify({ prevCarryover: document.getElementById('prevMonthCarryover').value, sigDate: document.getElementById('sigDate').value, signatureImage: isCanvasBlank ? null : canvas.toDataURL(), rows }));
         if (!silent) showToast('✓ Gespeichert!');
