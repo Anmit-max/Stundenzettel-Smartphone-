@@ -97,8 +97,7 @@
         <div class="info-grid">
             <div class="info-group" style="grid-column: span 2;"><label>Mitarbeiter Name</label><input type="text" id="empName" placeholder="Max Mustermann" onchange="autoSave()"></div>
             <div class="info-group"><label>Personal-Nr.</label><input type="text" id="empId" placeholder="12345" onchange="onEmpIdChange()"></div>
-            <!-- Monat hat jetzt einen harten Standardwert im HTML, damit er nie leer bleibt -->
-            <div class="info-group"><label>Monat & Jahr</label><input type="month" id="monthPicker" value="2026-10" onchange="onMonthChange()"></div>
+            <div class="info-group"><label>Monat & Jahr</label><input type="month" id="monthPicker" onchange="onMonthChange()"></div>
             <div class="info-group"><label>Abteilung</label><input type="text" id="dept" placeholder="Logistik" onchange="autoSave()"></div>
             <div class="info-group"><label>Soll-Std/Tag</label><input type="number" id="dailyTarget" value="0" step="0.5" min="0" onchange="calculateAllRows(); calculateTotals(); autoSave();"></div>
             <div class="info-group" style="grid-column: span 2;"><label>Übertrag Vormonat (Std)</label><input type="number" id="prevMonthCarryover" value="0.00" step="0.25" onchange="calculateTotals(); autoSave();"></div>
@@ -128,6 +127,7 @@
             <tbody id="tableBody"></tbody>
         </table>
     </div>
+    <!-- UNTERSCHRIFTEN- KARTE WIEDER VOLLSTÄNDIG ENTHALTEN -->
     <div class="card signature-card">
         <div class="section-title">✍ Unterschrift</div>
         <div class="signature-grid">
@@ -154,22 +154,20 @@
     let canvas, ctx, isDrawing = false, isCanvasBlank = true;
     let isInitialized = false;
 
-    // Setzt beim Start den echten aktuellen Monat (z.B. 2026-10) falls noch nicht geschehen
-    function forceValidMonth() {
-        const mp = document.getElementById('monthPicker');
-        if (!mp) return "2026-10";
-        if (!mp.value || mp.value.indexOf('-') === -1) {
+    function ensureMonthPickerValue() {
+        const monthPicker = document.getElementById('monthPicker');
+        if (!monthPicker) return;
+        if (!monthPicker.value || monthPicker.value.indexOf('-') === -1) {
             const today = new Date();
             const yyyy = today.getFullYear();
             let mm = today.getMonth() + 1;
             if (mm < 10) mm = '0' + mm;
-            mp.value = yyyy + '-' + mm;
+            monthPicker.value = yyyy + '-' + mm;
         }
-        return mp.value;
     }
 
     window.onload = function() {
-        forceValidMonth();
+        ensureMonthPickerValue();
 
         const today = new Date();
         const yyyy = today.getFullYear();
@@ -178,9 +176,9 @@
         let dd = today.getDate();
         if (dd < 10) dd = '0' + dd;
         
-        const sigDate = document.getElementById('sigDate');
-        if (sigDate && !sigDate.value) {
-            sigDate.value = yyyy + '-' + mm + '-' + dd;
+        const sigDateInput = document.getElementById('sigDate');
+        if (sigDateInput && !sigDateInput.value) {
+            sigDateInput.value = yyyy + '-' + mm + '-' + dd;
         }
         
         initSignatureCanvas(); 
@@ -244,7 +242,8 @@
     }
 
     function getStorageKey(m) { 
-        const monthVal = m || forceValidMonth();
+        ensureMonthPickerValue();
+        const monthVal = m || document.getElementById('monthPicker').value;
         const empIdEl = document.getElementById('empId');
         const empId = empIdEl ? empIdEl.value.trim() : '';
         const identifier = empId !== '' ? 'id_' + empId : getOrCreateDeviceUUID();
@@ -288,7 +287,9 @@
     function onEmpIdChange() { saveProfile(); initTableAndData(); }
 
     function initTableAndData() {
-        const mVal = forceValidMonth();
+        ensureMonthPickerValue();
+        const mVal = document.getElementById('monthPicker').value; 
+        if (!mVal) return;
         const p = mVal.split('-'); 
         let y = parseInt(p[0], 10), mo = parseInt(p[1], 10);
         
@@ -366,7 +367,7 @@
     function calculateTotals() {
         const rows = document.querySelectorAll('#tableBody tr'), target = parseFloat(document.getElementById('dailyTarget').value) || 0;
         const prev = parseFloat(document.getElementById('prevMonthCarryover').value) || 0;
-        let ist = 0, soll = 0, urlaub = 0, krank = 0, today = new Date(), mVal = forceValidMonth();
+        let ist = 0, soll = 0, urlaub = 0, krank = 0, today = new Date(), mVal = document.getElementById('monthPicker').value;
         let sY = today.getFullYear(), sM = today.getMonth() + 1;
         if (mVal && mVal.indexOf('-') !== -1) { const p = mVal.split('-'); sY = parseInt(p[0], 10); sM = parseInt(p[1], 10); }
         let istToday = 0, sollToday = 0;
@@ -421,7 +422,7 @@
         showToast("Erstelle PDF zum Senden & Sichern...");
         
         generatePDFBlob().then(blob => {
-            const fileName = `Zeitnachweis_${document.getElementById('empName').value || 'Mitarbeiter'}_${forceValidMonth()}.pdf`;
+            const fileName = `Zeitnachweis_${document.getElementById('empName').value || 'Mitarbeiter'}_${document.getElementById('monthPicker').value}.pdf`;
             const file = new File([blob], fileName, { type: 'application/pdf' });
             
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -446,7 +447,7 @@
     function generatePDFBlob() {
         return html2pdf().set({ 
             margin: [8, 8, 8, 8], 
-            filename: `Zeitnachweis_${document.getElementById('empName').value || 'Mitarbeiter'}_${forceValidMonth()}.pdf`, 
+            filename: `Zeitnachweis_${document.getElementById('empName').value || 'Mitarbeiter'}_${document.getElementById('monthPicker').value}.pdf`, 
             image: { type: 'jpeg', quality: 0.98 }, 
             html2canvas: { scale: 2, useCORS: true }, 
             jsPDF: { unit: 'mm', format: 'a4' } 
