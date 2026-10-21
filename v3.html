@@ -97,7 +97,7 @@
         <div class="section-title">👤 Stammdaten</div>
         <div class="info-grid">
             <div class="info-group" style="grid-column: span 2;"><label>Mitarbeiter Name</label><input type="text" id="empName" placeholder="Max Mustermann" onchange="autoSave()"></div>
-            <div class="info-group"><label>Personal-Nr.</label><input type="text" id="empId" placeholder="12345" onchange="autoSave()"></div>
+            <div class="info-group"><label>Personal-Nr.</label><input type="text" id="empId" placeholder="12345" onchange="onEmpIdChange()"></div>
             <div class="info-group"><label>Monat & Jahr</label><input type="month" id="monthPicker" onchange="onMonthChange()"></div>
             <div class="info-group"><label>Abteilung</label><input type="text" id="dept" placeholder="Logistik" onchange="autoSave()"></div>
             <div class="info-group"><label>Soll-Std/Tag</label><input type="number" id="dailyTarget" value="0" step="0.5" min="0" onchange="calculateAllRows(); calculateTotals(); autoSave();"></div>
@@ -153,6 +153,7 @@
     const LOHNBUERO_EMAIL = "personal@anmit.de"; 
     const daysOfWeek = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
     let canvas, ctx, isDrawing = false, isCanvasBlank = true;
+    let isInitialized = false;
     
     window.onload = function() {
         const today = new Date();
@@ -163,7 +164,12 @@
         let dd = today.getDate();
         if (dd < 10) dd = '0' + dd;
         document.getElementById('sigDate').value = yyyy + '-' + mm + '-' + dd;
-        initSignatureCanvas(); loadProfile(); generateTable(); loadData(true);
+        
+        initSignatureCanvas(); 
+        loadProfile(); 
+        // Generiere und lade Daten direkt in einem Schritt
+        initTableAndData();
+        isInitialized = true;
     };
 
     function initSignatureCanvas() {
@@ -233,24 +239,64 @@
             return (ist - soll) + (isNaN(prev) ? 0 : prev);
         } catch(e) { return 0; }
     }
-    function onMonthChange() { generateTable(); loadData(true); }
-    function generateTable() {
+
+    function onMonthChange() { initTableAndData(); }
+    function onEmpIdChange() { saveProfile(); initTableAndData(); }
+
+    // --- SICHERE SYNCHRONISATION VON TABELLE UND SPEICHER ---
+    function initTableAndData() {
         const mVal = document.getElementById('monthPicker').value; if (!mVal) return;
         const p = mVal.split('-'); let y = parseInt(p[0], 10), mo = parseInt(p[1], 10);
         const days = new Date(y, mo, 0).getDate(), tbody = document.getElementById('tableBody'); tbody.innerHTML = '';
+        
+        // Versuche gespeicherte Daten direkt zu laden
+        const savedData = JSON.parse(localStorage.getItem(getStorageKey()) || 'null');
+        clearSignature();
+
         for (let d = 1; d <= days; d++) {
             const dt = new Date(y, mo - 1, d), isWk = (dt.getDay() === 0 || dt.getDay() === 6);
             const row = document.createElement('tr'); if (isWk) row.classList.add('weekend'); row.dataset.day = d;
+            
+            // Werte aus dem Speicher für diesen Tag abrufen (falls vorhanden)
+            let sVal = '', eVal = '', tVal = 'WORK';
+            if (savedData && savedData.rows && savedData.rows[d - 1]) {
+                sVal = savedData.rows[d - 1].startTime || '';
+                eVal = savedData.rows[d - 1].endTime || '';
+                tVal = savedData.rows[d - 1].type || 'WORK';
+            }
+
             row.innerHTML = '<td>' + (d < 10 ? '0' + d : d) + '.' + (mo < 10 ? '0' + mo : mo) + '.</td>' +
                 '<td><b>' + daysOfWeek[dt.getDay()] + '</b></td>' +
-                '<td><input type="time" class="start-time" onchange="calculateRow(this); autoSave();"></td>' +
-                '<td><input type="time" class="end-time" onchange="calculateRow(this); autoSave();"></td>' +
+                '<td><input type="time" class="start-time" value="' + sVal + '" onchange="calculateRow(this); autoSave();"></td>' +
+                '<td><input type="time" class="end-time" value="' + eVal + '" onchange="calculateRow(this); autoSave();"></td>' +
                 '<td><span class="pause-display">0m</span></td><td class="work-time">0,00</td>' +
-                '<td><select class="type-select" onchange="calculateRow(this); autoSave();"><option value="WORK">Arbeit</option><option value="URLAUB">Urlaub</option><option value="KRANK">Krank</option><option value="FEIERTAG">Feiertag</option><option value="FREI">Frei</option></select></td>';
+                '<td><select class="type-select" onchange="calculateRow(this); autoSave();">' +
+                '<option value="WORK" ' + (tVal === 'WORK' ? 'selected' : '') + '>Arbeit</option>' +
+                '<option value="URLAUB" ' + (tVal === 'URLAUB' ? 'selected' : '') + '>Urlaub</option>' +
+                '<option value="KRANK" ' + (tVal === 'KRANK' ? 'selected' : '') + '>Krank</option>' +
+                '<option value="FEIERTAG" ' + (tVal === 'FEIERTAG' ? 'selected' : '') + '>Feiertag</option>' +
+                '<option value="FREI" ' + (tVal === 'FREI' ? 'selected' : '') + '>Frei</option>' +
+                '</select></td>';
             tbody.appendChild(row);
         }
-        calculateTotals();
+
+        // Restliche gespeicherte Metadaten (Übertrag, Unterschrift) wiederherstellen
+        if (savedData) {
+            document.getElementById('prevMonthCarryover').value = (savedData.prevCarryover !== undefined ? parseFloat(savedData.prevCarryover) : calculateMonthSaldo(getPreviousMonthString(mVal))).toFixed(2);
+            if (savedData.sigDate) document.getElementById('sigDate').value = savedData.sigDate;
+            if (savedData.signatureImage) { 
+                const img = new Image(); 
+                img.onload = () => { ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.drawImage(img, 0, 0); isCanvasBlank = false; }; 
+                img.src = savedData.signatureImage; 
+            }
+        } else {
+            document.getElementById('prevMonthCarryover').value = calculateMonthSaldo(getPreviousMonthString(mVal)).toFixed(2);
+        }
+
+        // Berechnungen für jede Zeile anstoßen
+        calculateAllRows();
     }
+
     function calculateRow(el) {
         const row = el.closest('tr'); if (!row) return;
         const s = row.querySelector('.start-time').value, e = row.querySelector('.end-time').value, type = row.querySelector('.type-select').value;
@@ -304,6 +350,7 @@
         if (p.dailyTarget !== undefined) document.getElementById('dailyTarget').value = p.dailyTarget;
     }
     function saveData(silent) {
+        if (!isInitialized) return; // Verhindert versehentliches Überschreiben beim Start
         saveProfile();
         let rows = []; document.querySelectorAll('#tableBody tr').forEach(r => {
             rows.push({ day: r.dataset.day, startTime: r.querySelector('.start-time').value, endTime: r.querySelector('.end-time').value, type: r.querySelector('.type-select').value, remark: '' });
@@ -336,32 +383,13 @@
         });
     }
 
-    function loadData(silent) {
-        generateTable(); const d = JSON.parse(localStorage.getItem(getStorageKey()) || 'null'); clearSignature();
-        if (!d) {
-            document.getElementById('prevMonthCarryover').value = calculateMonthSaldo(getPreviousMonthString(document.getElementById('monthPicker').value)).toFixed(2);
-            calculateTotals(); if (!silent) showToast('Keine Daten.'); return;
-        }
-        document.getElementById('prevMonthCarryover').value = (d.prevCarryover !== undefined ? parseFloat(d.prevCarryover) : calculateMonthSaldo(getPreviousMonthString(document.getElementById('monthPicker').value))).toFixed(2);
-        if (d.sigDate) document.getElementById('sigDate').value = d.sigDate;
-        if (d.signatureImage) { const img = new Image(); img.onload = () => { ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.drawImage(img, 0, 0); isCanvasBlank = false; }; img.src = d.signatureImage; }
-        document.querySelectorAll('#tableBody tr').forEach((r, i) => {
-            if (d.rows && d.rows[i]) {
-                r.querySelector('.start-time').value = d.rows[i].startTime || '';
-                r.querySelector('.end-time').value = d.rows[i].endTime || '';
-                r.querySelector('.type-select').value = d.rows[i].type || 'WORK';
-                calculateRow(r.querySelector('.start-time'));
-            }
-        });
-        calculateTotals(); if (!silent) showToast('✓ Geladen!');
-    }
     function deleteData() {
-        if (confirm('Wirklich zurücksetzen?')) { localStorage.removeItem(getStorageKey()); clearSignature(); generateTable(); loadData(true); showToast('Zurückgesetzt.'); }
+        if (confirm('Wirklich zurücksetzen?')) { localStorage.removeItem(getStorageKey()); clearSignature(); initTableAndData(); showToast('Zurückgesetzt.'); }
     }
     function generatePDFBlob() {
         return html2pdf().set({ 
             margin: [8, 8, 8, 8], 
-            filename: `Zeitnachweis_${document.getElementById('empName').value || 'Mitarbeiter'}_${document.getElementById('monthPicker').value}.pdf`, 
+            filename: `Zeitnachweis_${document.getElementById('empName').value || 'Mitarbeiter'}_${document.getElementById('monthPicker'].value}.pdf`, 
             image: { type: 'jpeg', quality: 0.98 }, 
             html2canvas: { scale: 2, useCORS: true }, 
             jsPDF: { unit: 'mm', format: 'a4' } 
