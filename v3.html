@@ -156,21 +156,33 @@
     let isInitialized = false;
     
     window.onload = function() {
+        // MONATS-PICKER ABSICHERN: Strikter Fallback auf aktuellen Monat
+        ensureMonthPickerValue();
+
         const today = new Date();
         const yyyy = today.getFullYear();
         let mm = today.getMonth() + 1;
         if (mm < 10) mm = '0' + mm;
-        if (!document.getElementById('monthPicker').value) document.getElementById('monthPicker').value = yyyy + '-' + mm;
         let dd = today.getDate();
         if (dd < 10) dd = '0' + dd;
         document.getElementById('sigDate').value = yyyy + '-' + mm + '-' + dd;
         
         initSignatureCanvas(); 
         loadProfile(); 
-        // Generiere und lade Daten direkt in einem Schritt
         initTableAndData();
         isInitialized = true;
     };
+
+    function ensureMonthPickerValue() {
+        const monthPicker = document.getElementById('monthPicker');
+        if (!monthPicker.value) {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            let mm = today.getMonth() + 1;
+            if (mm < 10) mm = '0' + mm;
+            monthPicker.value = yyyy + '-' + mm;
+        }
+    }
 
     function initSignatureCanvas() {
         canvas = document.getElementById('sigCanvas'); ctx = canvas.getContext('2d');
@@ -208,6 +220,7 @@
     }
 
     function getStorageKey(m) { 
+        ensureMonthPickerValue();
         const empId = document.getElementById('empId').value.trim();
         const identifier = empId !== '' ? 'id_' + empId : getOrCreateDeviceUUID();
         const month = m || document.getElementById('monthPicker').value;
@@ -243,13 +256,12 @@
     function onMonthChange() { initTableAndData(); }
     function onEmpIdChange() { saveProfile(); initTableAndData(); }
 
-    // --- SICHERE SYNCHRONISATION VON TABELLE UND SPEICHER ---
     function initTableAndData() {
+        ensureMonthPickerValue();
         const mVal = document.getElementById('monthPicker').value; if (!mVal) return;
         const p = mVal.split('-'); let y = parseInt(p[0], 10), mo = parseInt(p[1], 10);
         const days = new Date(y, mo, 0).getDate(), tbody = document.getElementById('tableBody'); tbody.innerHTML = '';
         
-        // Versuche gespeicherte Daten direkt zu laden
         const savedData = JSON.parse(localStorage.getItem(getStorageKey()) || 'null');
         clearSignature();
 
@@ -257,7 +269,6 @@
             const dt = new Date(y, mo - 1, d), isWk = (dt.getDay() === 0 || dt.getDay() === 6);
             const row = document.createElement('tr'); if (isWk) row.classList.add('weekend'); row.dataset.day = d;
             
-            // Werte aus dem Speicher für diesen Tag abrufen (falls vorhanden)
             let sVal = '', eVal = '', tVal = 'WORK';
             if (savedData && savedData.rows && savedData.rows[d - 1]) {
                 sVal = savedData.rows[d - 1].startTime || '';
@@ -280,7 +291,6 @@
             tbody.appendChild(row);
         }
 
-        // Restliche gespeicherte Metadaten (Übertrag, Unterschrift) wiederherstellen
         if (savedData) {
             document.getElementById('prevMonthCarryover').value = (savedData.prevCarryover !== undefined ? parseFloat(savedData.prevCarryover) : calculateMonthSaldo(getPreviousMonthString(mVal))).toFixed(2);
             if (savedData.sigDate) document.getElementById('sigDate').value = savedData.sigDate;
@@ -293,7 +303,6 @@
             document.getElementById('prevMonthCarryover').value = calculateMonthSaldo(getPreviousMonthString(mVal)).toFixed(2);
         }
 
-        // Berechnungen für jede Zeile anstoßen
         calculateAllRows();
     }
 
@@ -350,7 +359,7 @@
         if (p.dailyTarget !== undefined) document.getElementById('dailyTarget').value = p.dailyTarget;
     }
     function saveData(silent) {
-        if (!isInitialized) return; // Verhindert versehentliches Überschreiben beim Start
+        if (!isInitialized) return;
         saveProfile();
         let rows = []; document.querySelectorAll('#tableBody tr').forEach(r => {
             rows.push({ day: r.dataset.day, startTime: r.querySelector('.start-time').value, endTime: r.querySelector('.end-time').value, type: r.querySelector('.type-select').value, remark: '' });
@@ -389,7 +398,7 @@
     function generatePDFBlob() {
         return html2pdf().set({ 
             margin: [8, 8, 8, 8], 
-            filename: `Zeitnachweis_${document.getElementById('empName').value || 'Mitarbeiter'}_${document.getElementById('monthPicker'].value}.pdf`, 
+            filename: `Zeitnachweis_${document.getElementById('empName').value || 'Mitarbeiter'}_${document.getElementById('monthPicker').value}.pdf`, 
             image: { type: 'jpeg', quality: 0.98 }, 
             html2canvas: { scale: 2, useCORS: true }, 
             jsPDF: { unit: 'mm', format: 'a4' } 
