@@ -127,7 +127,8 @@
             <tbody id="tableBody"></tbody>
         </table>
     </div>
-    <!-- UNTERSCHRIFTEN- KARTE WIEDER VOLLSTÄNDIG ENTHALTEN -->
+    
+    <!-- UNTERSCHRIFTEN- KARTE (CANVAS NOTIZFELD) VOLLSTÄNDIG WIEDER DA -->
     <div class="card signature-card">
         <div class="section-title">✍ Unterschrift</div>
         <div class="signature-grid">
@@ -142,6 +143,7 @@
         </div>
     </div>
 </div>
+
 <div class="mobile-bottom-bar no-print">
     <button class="bar-btn highlight-btn" onclick="saveAndShareData()"><span class="icon">💾</span><span>Speichern, Sichern & Senden</span></button>
     <button class="bar-btn" onclick="generatePDFBlob().then(b => downloadBlob(b, `Zeitnachweis_${document.getElementById('empName').value || 'Mitarbeiter'}.pdf`))"><span class="icon">📄</span><span>PDF</span></button>
@@ -153,21 +155,16 @@
     const daysOfWeek = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
     let canvas, ctx, isDrawing = false, isCanvasBlank = true;
     let isInitialized = false;
-
-    function ensureMonthPickerValue() {
+    
+    window.onload = function() {
         const monthPicker = document.getElementById('monthPicker');
-        if (!monthPicker) return;
-        if (!monthPicker.value || monthPicker.value.indexOf('-') === -1) {
+        if (!monthPicker.value) {
             const today = new Date();
             const yyyy = today.getFullYear();
             let mm = today.getMonth() + 1;
             if (mm < 10) mm = '0' + mm;
             monthPicker.value = yyyy + '-' + mm;
         }
-    }
-
-    window.onload = function() {
-        ensureMonthPickerValue();
 
         const today = new Date();
         const yyyy = today.getFullYear();
@@ -175,11 +172,7 @@
         if (mm < 10) mm = '0' + mm;
         let dd = today.getDate();
         if (dd < 10) dd = '0' + dd;
-        
-        const sigDateInput = document.getElementById('sigDate');
-        if (sigDateInput && !sigDateInput.value) {
-            sigDateInput.value = yyyy + '-' + mm + '-' + dd;
-        }
+        document.getElementById('sigDate').value = yyyy + '-' + mm + '-' + dd;
         
         initSignatureCanvas(); 
         loadProfile(); 
@@ -242,31 +235,32 @@
     }
 
     function getStorageKey(m) { 
-        ensureMonthPickerValue();
-        const monthVal = m || document.getElementById('monthPicker').value;
+        const monthPicker = document.getElementById('monthPicker');
+        if (!monthPicker.value) {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            let mm = today.getMonth() + 1;
+            if (mm < 10) mm = '0' + mm;
+            monthPicker.value = yyyy + '-' + mm;
+        }
         const empIdEl = document.getElementById('empId');
         const empId = empIdEl ? empIdEl.value.trim() : '';
         const identifier = empId !== '' ? 'id_' + empId : getOrCreateDeviceUUID();
-        return 'v3_zeitnachweis_' + identifier + '_' + monthVal; 
+        const month = m || monthPicker.value;
+        return 'v3_zeitnachweis_' + identifier + '_' + month; 
     }
 
     function getPreviousMonthString(v) {
-        if (!v || v.indexOf('-') === -1) return null;
-        const p = v.split('-'); 
-        let y = parseInt(p[0], 10), mo = parseInt(p[1], 10) - 1;
-        if (mo < 1) { mo = 12; y--; } 
-        return y + '-' + (mo < 10 ? '0' + mo : mo);
+        if (!v) return null; const p = v.split('-'); let y = parseInt(p[0], 10), mo = parseInt(p[1], 10) - 1;
+        if (mo < 1) { mo = 12; y--; } return y + '-' + (mo < 10 ? '0' + mo : mo);
     }
 
     function calculateMonthSaldo(mVal) {
-        const d = localStorage.getItem(getStorageKey(mVal)); 
-        if (!d) return 0;
+        const d = localStorage.getItem(getStorageKey(mVal)); if (!d) return 0;
         try {
-            const parsed = JSON.parse(d); 
-            let rows = Array.isArray(parsed) ? parsed : (parsed.rows || []);
+            const parsed = JSON.parse(d); let rows = Array.isArray(parsed) ? parsed : (parsed.rows || []);
             let target = parseFloat(document.getElementById('dailyTarget').value) || 0, ist = 0, soll = 0;
-            const p = mVal.split('-'); 
-            let y = parseInt(p[0], 10), mo = parseInt(p[1], 10);
+            const p = mVal.split('-'); let y = parseInt(p[0], 10), mo = parseInt(p[1], 10);
             rows.forEach((item, i) => {
                 const dt = new Date(y, mo - 1, i + 1), isWk = (dt.getDay() === 0 || dt.getDay() === 6);
                 let dur = 0, type = item.type || 'WORK';
@@ -287,29 +281,27 @@
     function onEmpIdChange() { saveProfile(); initTableAndData(); }
 
     function initTableAndData() {
-        ensureMonthPickerValue();
-        const mVal = document.getElementById('monthPicker').value; 
-        if (!mVal) return;
-        const p = mVal.split('-'); 
-        let y = parseInt(p[0], 10), mo = parseInt(p[1], 10);
-        
-        if (isNaN(y) || isNaN(mo)) {
-            y = 2026; mo = 10;
+        const monthPicker = document.getElementById('monthPicker');
+        if (!monthPicker.value) {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            let mm = today.getMonth() + 1;
+            if (mm < 10) mm = '0' + mm;
+            monthPicker.value = yyyy + '-' + mm;
         }
 
-        const days = new Date(y, mo, 0).getDate();
-        const tbody = document.getElementById('tableBody'); 
+        const mVal = monthPicker.value;
+        const p = mVal.split('-'); let y = parseInt(p[0], 10), mo = parseInt(p[1], 10);
+        const days = new Date(y, mo, 0).getDate(), tbody = document.getElementById('tableBody'); 
         if (!tbody) return;
         tbody.innerHTML = '';
         
-        const savedData = JSON.parse(localStorage.getItem(getStorageKey(mVal)) || 'null');
+        const savedData = JSON.parse(localStorage.getItem(getStorageKey()) || 'null');
         clearSignature();
 
         for (let d = 1; d <= days; d++) {
             const dt = new Date(y, mo - 1, d), isWk = (dt.getDay() === 0 || dt.getDay() === 6);
-            const row = document.createElement('tr'); 
-            if (isWk) row.classList.add('weekend'); 
-            row.dataset.day = d;
+            const row = document.createElement('tr'); if (isWk) row.classList.add('weekend'); row.dataset.day = d;
             
             let sVal = '', eVal = '', tVal = 'WORK';
             if (savedData && savedData.rows && savedData.rows[d - 1]) {
@@ -356,7 +348,7 @@
         if ((type === 'WORK' || type === 'FREI') && s && e) {
             const st = new Date('1970-01-01T' + s + ':00'), et = new Date('1970-01-01T' + e + ':00');
             let diff = et - st; if (diff < 0) diff += 86400000;
-            let raw = diff / 3600000; pause = raw > 9 ? 45 : (raw > 6 ? 30 : 0);
+            let raw = diff / 3600000, pause = raw > 9 ? 45 : (raw > 6 ? 30 : 0);
             dur = Math.max(0, (diff / 60000) - pause) / 60;
         } else if (['URLAUB', 'KRANK', 'FEIERTAG'].includes(type)) { dur = target; }
         pDisp.innerText = pause + 'm'; wTd.innerText = dur.toFixed(2).replace('.', ','); calculateTotals();
@@ -419,7 +411,7 @@
 
     function saveAndShareData() {
         saveData(true);
-        showToast("Erstelle PDF zum Senden & Sichern...");
+        showToast("Erstelle Sicherungs-PDF...");
         
         generatePDFBlob().then(blob => {
             const fileName = `Zeitnachweis_${document.getElementById('empName').value || 'Mitarbeiter'}_${document.getElementById('monthPicker').value}.pdf`;
