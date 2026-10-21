@@ -54,17 +54,17 @@
             overflow: hidden; 
         }
 
-        table { width: 100%; border-collapse: collapse; font-size: 10px; table-layout: fixed; }
-        th { background-color: #f1f5f9; color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 8px; padding: 6px 1px; text-align: center; border-bottom: 1px solid var(--border); overflow: hidden; }
-        td { border-bottom: 1px solid #f1f5f9; padding: 4px 1px; text-align: center; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed; }
+        th { background-color: #f1f5f9; color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 9px; padding: 6px 2px; text-align: center; border-bottom: 1px solid var(--border); overflow: hidden; }
+        td { border-bottom: 1px solid #f1f5f9; padding: 4px 2px; text-align: center; overflow: hidden; }
         tr.weekend { background-color: #f8fafc; color: #94a3b8; }
         
         input[type="time"], input[type="text"], input[type="number"], input[type="date"], select.type-select { 
-            width: 100%; border: 1px solid var(--border); background: #ffffff; text-align: center; font-family: inherit; font-size: 10px; padding: 4px 1px; border-radius: var(--radius-sm); color: var(--text); outline: none; 
+            width: 100%; border: 1px solid var(--border); background: #ffffff; text-align: center; font-family: inherit; font-size: 11px; padding: 4px 1px; border-radius: var(--radius-sm); color: var(--text); outline: none; 
         }
         
-        .pause-display { font-size: 9px; color: var(--text-muted); font-weight: 600; }
-        .work-time { font-weight: 700; color: var(--primary); font-size: 10px; }
+        .pause-display { font-size: 10px; color: var(--text-muted); font-weight: 600; }
+        .work-time { font-weight: 700; color: var(--primary); font-size: 11px; }
         
         .signature-card { margin-top: 12px; }
         .signature-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
@@ -78,7 +78,7 @@
         .bar-btn { display: flex; flex-direction: column; align-items: center; gap: 1px; background: none; border: none; color: var(--text-muted); font-size: 10px; font-weight: 600; cursor: pointer; padding: 2px 4px; }
         .bar-btn.highlight-btn { color: var(--success); font-weight: 700; }
         .bar-btn span.icon { font-size: 16px; }
-        .status-toast { position: fixed; top: 15px; left: 50%; transform: translateX(-50%); background-color: var(--primary-dark); color: white; padding: 10px 18px; border-radius: 20px; font-size: 12px; font-weight: 600; display: none; z-index: 10000; text-align: center; box-shadow: var(--shadow-md); }
+        .status-toast { position: fixed; top: 15px; left: 50%; transform: translateX(-50%); background-color: var(--primary-dark); color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; display: none; z-index: 10000; }
         @media print { .no-print, .app-header, .mobile-bottom-bar, .status-toast, .canvas-actions { display: none !important; } }
     </style>
 </head>
@@ -87,8 +87,8 @@
     <div class="header-content">
         <h1><span>⏱️</span> Zeitnachweis</h1>
         <div class="header-actions no-print">
-            <button class="btn-icon" onclick="saveData()">💾 Speichern</button>
-            <button class="btn-icon btn-accent" onclick="sharePDF()">✉️ Teilen</button>
+            <button class="btn-icon" onclick="saveAndShareData()">💾 Speichern & Sichern</button>
+            <button class="btn-icon btn-accent" onclick="sendViaEmail()">✉️ Mail</button>
         </div>
     </div>
 </header>
@@ -116,14 +116,13 @@
         <table id="timeTable">
             <thead>
                 <tr>
-                    <th style="width: 12%;">Datum</th>
-                    <th style="width: 8%;">Tag</th>
-                    <th style="width: 14%;">Beginn</th>
-                    <th style="width: 14%;">Ende</th>
-                    <th style="width: 10%;">Pause</th>
-                    <th style="width: 11%;">Std.</th>
-                    <th style="width: 15%;">Status</th>
-                    <th style="width: 16%;">Notiz</th>
+                    <th style="width: 14%;">Datum</th>
+                    <th style="width: 9%;">Tag</th>
+                    <th style="width: 16%;">Beginn</th>
+                    <th style="width: 16%;">Ende</th>
+                    <th style="width: 12%;">Pause</th>
+                    <th style="width: 13%;">Std.</th>
+                    <th style="width: 20%;">Status</th>
                 </tr>
             </thead>
             <tbody id="tableBody"></tbody>
@@ -144,15 +143,17 @@
     </div>
 </div>
 <div class="mobile-bottom-bar no-print">
-    <button class="bar-btn" onclick="saveData()"><span class="icon">💾</span><span>Speichern</span></button>
-    <button class="bar-btn highlight-btn" onclick="sharePDF()"><span class="icon">📤</span><span>Teilen / Senden</span></button>
-    <button class="bar-btn" onclick="downloadPDF()"><span class="icon">📄</span><span>PDF</span></button>
+    <button class="bar-btn" onclick="saveAndShareData()"><span class="icon">💾</span><span>Speichern & Sichern</span></button>
+    <button class="bar-btn highlight-btn" onclick="sendViaEmail()"><span class="icon">✉️</span><span>Senden</span></button>
+    <button class="bar-btn" onclick="generatePDFBlob().then(b => downloadBlob(b, `Zeitnachweis_${document.getElementById('empName').value || 'Mitarbeiter'}.pdf`))"><span class="icon">📄</span><span>PDF</span></button>
     <button class="bar-btn" style="color: var(--danger);" onclick="deleteData()"><span class="icon">🗑️</span><span>Reset</span></button>
 </div>
 <div id="statusToast" class="status-toast"></div>
 <script>
+    const LOHNBUERO_EMAIL = "personal@anmit.de"; 
     const daysOfWeek = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
     let canvas, ctx, isDrawing = false, isCanvasBlank = true;
+    
     window.onload = function() {
         const today = new Date();
         const yyyy = today.getFullYear();
@@ -164,6 +165,7 @@
         document.getElementById('sigDate').value = yyyy + '-' + mm + '-' + dd;
         initSignatureCanvas(); loadProfile(); generateTable(); loadData(true);
     };
+
     function initSignatureCanvas() {
         canvas = document.getElementById('sigCanvas'); ctx = canvas.getContext('2d');
         resizeCanvas(); window.addEventListener('resize', resizeCanvas);
@@ -188,8 +190,24 @@
     function handleTouchStart(e) { e.preventDefault(); if (e.touches.length === 1) startDrawing(e.touches[0]); }
     function handleTouchMove(e) { e.preventDefault(); if (e.touches.length === 1) draw(e.touches[0]); }
     function clearSignature() { ctx.clearRect(0, 0, canvas.width, canvas.height); isCanvasBlank = true; autoSave(); }
-    function showToast(msg) { const t = document.getElementById('statusToast'); t.innerText = msg; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 3500); }
-    function getStorageKey(m) { return 'zeitnachweis_app_' + (document.getElementById('empId').value.trim() || 'default') + '_' + (m || document.getElementById('monthPicker').value); }
+    function showToast(msg) { const t = document.getElementById('statusToast'); t.innerText = msg; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 2500); }
+
+    function getOrCreateDeviceUUID() {
+        let uuid = localStorage.getItem('zeitnachweis_device_uuid');
+        if (!uuid) {
+            uuid = 'dev_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            localStorage.setItem('zeitnachweis_device_uuid', uuid);
+        }
+        return uuid;
+    }
+
+    function getStorageKey(m) { 
+        const empId = document.getElementById('empId').value.trim();
+        const identifier = empId !== '' ? 'id_' + empId : getOrCreateDeviceUUID();
+        const month = m || document.getElementById('monthPicker').value;
+        return 'v3_zeitnachweis_' + identifier + '_' + month; 
+    }
+
     function getPreviousMonthString(v) {
         if (!v) return null; const p = v.split('-'); let y = parseInt(p[0], 10), mo = parseInt(p[1], 10) - 1;
         if (mo < 1) { mo = 12; y--; } return y + '-' + (mo < 10 ? '0' + mo : mo);
@@ -228,8 +246,7 @@
                 '<td><input type="time" class="start-time" onchange="calculateRow(this); autoSave();"></td>' +
                 '<td><input type="time" class="end-time" onchange="calculateRow(this); autoSave();"></td>' +
                 '<td><span class="pause-display">0m</span></td><td class="work-time">0,00</td>' +
-                '<td><select class="type-select" onchange="calculateRow(this); autoSave();"><option value="WORK">Arbeit</option><option value="URLAUB">Urlaub</option><option value="KRANK">Krank</option><option value="FEIERTAG">Feiertag</option><option value="FREI">Frei</option></select></td>' +
-                '<td><input type="text" class="remark" style="text-align:left;" onchange="autoSave();"></td>';
+                '<td><select class="type-select" onchange="calculateRow(this); autoSave();"><option value="WORK">Arbeit</option><option value="URLAUB">Urlaub</option><option value="KRANK">Krank</option><option value="FEIERTAG">Feiertag</option><option value="FREI">Frei</option></select></td>';
             tbody.appendChild(row);
         }
         calculateTotals();
@@ -289,12 +306,36 @@
     function saveData(silent) {
         saveProfile();
         let rows = []; document.querySelectorAll('#tableBody tr').forEach(r => {
-            rows.push({ day: r.dataset.day, startTime: r.querySelector('.start-time').value, endTime: r.querySelector('.end-time').value, type: r.querySelector('.type-select').value, remark: r.querySelector('.remark').value });
+            rows.push({ day: r.dataset.day, startTime: r.querySelector('.start-time').value, endTime: r.querySelector('.end-time').value, type: r.querySelector('.type-select').value, remark: '' });
         });
         localStorage.setItem(getStorageKey(), JSON.stringify({ prevCarryover: document.getElementById('prevMonthCarryover').value, sigDate: document.getElementById('sigDate').value, signatureImage: isCanvasBlank ? null : canvas.toDataURL(), rows }));
         if (!silent) showToast('✓ Gespeichert!');
     }
     function autoSave() { saveData(true); }
+    
+    function saveAndShareData() {
+        saveData(true);
+        showToast("Erstelle Sicherungs-PDF...");
+        
+        generatePDFBlob().then(blob => {
+            const fileName = `Zeitnachweis_${document.getElementById('empName').value || 'Mitarbeiter'}_${document.getElementById('monthPicker').value}.pdf`;
+            const file = new File([blob], fileName, { type: 'application/pdf' });
+            
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                navigator.share({
+                    files: [file],
+                    title: 'Zeitnachweis Sicherung',
+                    text: 'Hier ist die Sicherung des Zeitnachweises.'
+                }).catch(() => {});
+            } else {
+                downloadBlob(blob, fileName);
+                showToast("✓ PDF gespeichert!");
+            }
+        }).catch(() => {
+            showToast("Fehler beim Erstellen des PDFs.");
+        });
+    }
+
     function loadData(silent) {
         generateTable(); const d = JSON.parse(localStorage.getItem(getStorageKey()) || 'null'); clearSignature();
         if (!d) {
@@ -309,7 +350,6 @@
                 r.querySelector('.start-time').value = d.rows[i].startTime || '';
                 r.querySelector('.end-time').value = d.rows[i].endTime || '';
                 r.querySelector('.type-select').value = d.rows[i].type || 'WORK';
-                r.querySelector('.remark').value = d.rows[i].remark || '';
                 calculateRow(r.querySelector('.start-time'));
             }
         });
@@ -318,52 +358,29 @@
     function deleteData() {
         if (confirm('Wirklich zurücksetzen?')) { localStorage.removeItem(getStorageKey()); clearSignature(); generateTable(); loadData(true); showToast('Zurückgesetzt.'); }
     }
-    function downloadPDF() {
-        showToast("Erstelle PDF...");
-        const element = document.getElementById('pdfContent');
-        const opt = {
-            margin: [8, 8, 8, 8],
-            filename: `Zeitnachweis_${document.getElementById('empName').value || 'Mitarbeiter'}_${document.getElementById('monthPicker').value}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-        html2pdf().from(element).set(opt).save();
+    function generatePDFBlob() {
+        return html2pdf().set({ 
+            margin: [8, 8, 8, 8], 
+            filename: `Zeitnachweis_${document.getElementById('empName').value || 'Mitarbeiter'}_${document.getElementById('monthPicker').value}.pdf`, 
+            image: { type: 'jpeg', quality: 0.98 }, 
+            html2canvas: { scale: 2, useCORS: true }, 
+            jsPDF: { unit: 'mm', format: 'a4' } 
+        }).from(document.getElementById('pdfContent')).output('blob');
     }
-    function sharePDF() {
-        saveData(true);
-        showToast("Generiere PDF zum Teilen...");
-        const element = document.getElementById('pdfContent');
-        const opt = {
-            margin: [8, 8, 8, 8],
-            filename: `Zeitnachweis_${document.getElementById('empName').value || 'Mitarbeiter'}_${document.getElementById('monthPicker').value}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-
-        html2pdf().from(element).set(opt).output('blob').then(function(blob) {
-            const fileName = `Zeitnachweis_${document.getElementById('empName').value || 'Mitarbeiter'}_${document.getElementById('monthPicker').value}.pdf`;
-            const file = new File([blob], fileName, { type: 'application/pdf' });
-
+    function sendViaEmail() {
+        showToast("Bereite E-Mail vor...");
+        generatePDFBlob().then(blob => {
+            const file = new File([blob], `Zeitnachweis.pdf`, { type: 'application/pdf' });
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                navigator.share({
-                    title: 'Zeitnachweis',
-                    text: 'Anbei mein aktueller Zeitnachweis.',
-                    files: [file]
-                }).catch(() => {});
-            } else {
-                // Fallback für Geräte ohne direkte Datei-Teilmöglichkeit
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = fileName;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                showToast("PDF heruntergeladen.");
-            }
-        });
+                navigator.share({ files: [file], title: 'Zeitnachweis', text: 'Anbei der Zeitnachweis.' }).catch(() => executeMailtoFallback());
+            } else { downloadBlob(blob, 'Zeitnachweis.pdf'); executeMailtoFallback(); }
+        }).catch(() => executeMailtoFallback());
+    }
+    function executeMailtoFallback() {
+        window.location.href = `mailto:${LOHNBUERO_EMAIL}?subject=` + encodeURIComponent(`Zeitnachweis ${document.getElementById('empName').value}`) + `&body=` + encodeURIComponent(`Hallo Lohnbüro,\n\nhier sind die Daten.`);
+    }
+    function downloadBlob(b, fn) {
+        const u = URL.createObjectURL(b), a = document.createElement('a'); a.href = u; a.download = fn; document.body.appendChild(a); a.click(); document.body.removeChild(u);
     }
 </script>
 </body>
