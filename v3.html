@@ -23,7 +23,7 @@
         .app-header { background: linear-gradient(135deg, var(--primary-dark), var(--primary)); color: white; padding: 12px 16px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.15); }
         .app-header .header-content { max-width: 900px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
         .app-header h1 { margin: 0; font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
-        .header-actions { display: flex; gap: 4px; }
+        .header-actions { display: flex; gap: 6px; }
         .btn-icon { background: rgba(255, 255, 255, 0.15); color: white; border: none; padding: 6px 10px; border-radius: var(--radius-md); font-weight: 600; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px; }
         .btn-accent { background: var(--success); }
         .container { max-width: 900px; margin: 0 auto; padding: 10px; }
@@ -95,12 +95,12 @@
     <div class="card">
         <div class="section-title">👤 Stammdaten</div>
         <div class="info-grid">
-            <div class="info-group" style="grid-column: span 2;"><label>Mitarbeiter Name</label><input type="text" id="empName" placeholder="Max Mustermann" onchange="autoSave()"></div>
-            <div class="info-group"><label>Personal-Nr.</label><input type="text" id="empId" placeholder="12345" onchange="onEmpIdChange()"></div>
+            <div class="info-group" style="grid-column: span 2;"><label>Mitarbeiter Name</label><input type="text" id="empName" placeholder="Max Mustermann" oninput="saveProfile(); autoSave();"></div>
+            <div class="info-group"><label>Personal-Nr.</label><input type="text" id="empId" placeholder="12345" oninput="saveProfile(); autoSave();"></div>
             <div class="info-group"><label>Monat & Jahr</label><input type="month" id="monthPicker" onchange="onMonthChange()"></div>
-            <div class="info-group"><label>Abteilung</label><input type="text" id="dept" placeholder="Logistik" onchange="autoSave()"></div>
-            <div class="info-group"><label>Soll-Std/Tag</label><input type="number" id="dailyTarget" value="0" step="0.5" min="0" onchange="calculateAllRows(); calculateTotals(); autoSave();"></div>
-            <div class="info-group" style="grid-column: span 2;"><label>Übertrag Vormonat (Std)</label><input type="number" id="prevMonthCarryover" value="0.00" step="0.25" onchange="calculateTotals(); autoSave();"></div>
+            <div class="info-group"><label>Abteilung</label><input type="text" id="dept" placeholder="Logistik" oninput="saveProfile(); autoSave();"></div>
+            <div class="info-group"><label>Soll-Std/Tag</label><input type="number" id="dailyTarget" value="8.0" step="0.5" min="0" oninput="saveProfile(); calculateAllRows(); calculateTotals(); autoSave();"></div>
+            <div class="info-group" style="grid-column: span 2;"><label>Übertrag Vormonat (Std)</label><input type="number" id="prevMonthCarryover" value="0.00" step="0.25" oninput="calculateTotals(); autoSave();"></div>
         </div>
     </div>
     <div class="summary-dashboard">
@@ -146,7 +146,8 @@
 </div>
 
 <div class="mobile-bottom-bar no-print">
-    <button class="bar-btn highlight-btn" onclick="saveAndShareData()"><span class="icon">💾</span><span>Speichern, Sichern & Senden</span></button>
+    <button class="bar-btn highlight-btn" onclick="saveAndShareData()"><span class="icon">💾</span><span>Speichern & Senden</span></button>
+    <button class="bar-btn" onclick="exportBackup()"><span class="icon">📦</span><span>Backup</span></button>
     <button class="bar-btn" onclick="generatePDFBlob().then(b => downloadBlob(b, `Zeitnachweis_${document.getElementById('empName').value || 'Mitarbeiter'}.pdf`))"><span class="icon">📄</span><span>PDF</span></button>
     <button class="bar-btn" style="color: var(--danger);" onclick="deleteData()"><span class="icon">🗑️</span><span>Reset</span></button>
 </div>
@@ -223,63 +224,16 @@
     function stopDrawing() { if (isDrawing) { isDrawing = false; autoSave(); } }
     function handleTouchStart(e) { e.preventDefault(); if (e.touches.length === 1) startDrawing(e.touches[0]); }
     function handleTouchMove(e) { e.preventDefault(); if (e.touches.length === 1) draw(e.touches[0]); }
-    function clearSignature() { if (ctx && canvas) ctx.clearRect(0, 0, canvas.width, canvas.height); isCanvasBlank = true; autoSave(); }
+    function clearSignature() { if (ctx && canvas) ctx.clearRect(0, 0, canvas.width, canvas.height); isCanvasBlank = true; }
     function showToast(msg) { const t = document.getElementById('statusToast'); if (!t) return; t.innerText = msg; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 2500); }
-
-    function getOrCreateDeviceUUID() {
-        let uuid = localStorage.getItem('zeitnachweis_device_uuid');
-        if (!uuid) {
-            uuid = 'dev_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-            localStorage.setItem('zeitnachweis_device_uuid', uuid);
-        }
-        return uuid;
-    }
 
     function getStorageKey(m) { 
         const monthPicker = document.getElementById('monthPicker');
-        if (!monthPicker.value) {
-            const today = new Date();
-            const yyyy = today.getFullYear();
-            let mm = today.getMonth() + 1;
-            if (mm < 10) mm = '0' + mm;
-            monthPicker.value = yyyy + '-' + mm;
-        }
-        const empIdEl = document.getElementById('empId');
-        const empId = empIdEl ? empIdEl.value.trim() : '';
-        const identifier = empId !== '' ? 'id_' + empId : getOrCreateDeviceUUID();
-        const month = m || monthPicker.value;
-        return 'v3_zeitnachweis_' + identifier + '_' + month; 
-    }
-
-    function getPreviousMonthString(v) {
-        if (!v) return null; const p = v.split('-'); let y = parseInt(p[0], 10), mo = parseInt(p[1], 10) - 1;
-        if (mo < 1) { mo = 12; y--; } return y + '-' + (mo < 10 ? '0' + mo : mo);
-    }
-
-    function calculateMonthSaldo(mVal) {
-        const d = localStorage.getItem(getStorageKey(mVal)); if (!d) return 0;
-        try {
-            const parsed = JSON.parse(d); let rows = Array.isArray(parsed) ? parsed : (parsed.rows || []);
-            let target = parseFloat(document.getElementById('dailyTarget').value) || 0, ist = 0, soll = 0;
-            const p = mVal.split('-'); let y = parseInt(p[0], 10), mo = parseInt(p[1], 10);
-            rows.forEach((item, i) => {
-                const dt = new Date(y, mo - 1, i + 1), isWk = (dt.getDay() === 0 || dt.getDay() === 6);
-                let dur = 0, type = item.type || 'WORK';
-                if ((type === 'WORK' || type === 'FREI') && item.startTime && item.endTime) {
-                    const s = new Date('1970-01-01T' + item.startTime + ':00'), e = new Date('1970-01-01T' + item.endTime + ':00');
-                    let diff = e - s; if (diff < 0) diff += 86400000;
-                    let raw = diff / 3600000, pause = raw > 9 ? 45 : (raw > 6 ? 30 : 0);
-                    dur = Math.max(0, (diff / 60000) - pause) / 60;
-                } else if (['URLAUB', 'KRANK', 'FEIERTAG'].includes(type)) { dur = target; }
-                ist += dur; if (!isWk && type !== 'FREI') soll += target;
-            });
-            let prev = !Array.isArray(parsed) && parsed.prevCarryover ? parseFloat(parsed.prevCarryover) : calculateMonthSaldo(getPreviousMonthString(mVal));
-            return (ist - soll) + (isNaN(prev) ? 0 : prev);
-        } catch(e) { return 0; }
+        const month = m || (monthPicker ? monthPicker.value : '');
+        return 'v4_zeiterfassung_' + month; 
     }
 
     function onMonthChange() { initTableAndData(); }
-    function onEmpIdChange() { saveProfile(); initTableAndData(); }
 
     function initTableAndData() {
         const monthPicker = document.getElementById('monthPicker');
@@ -324,12 +278,12 @@
                 '<option value="FEIERTAG" ' + (tVal === 'FEIERTAG' ? 'selected' : '') + '>Feiertag</option>' +
                 '<option value="FREI" ' + (tVal === 'FREI' ? 'selected' : '') + '>Frei</option>' +
                 '</select></td>' +
-                '<td><input type="text" class="row-remark" value="' + rVal + '" placeholder="Notiz" onchange="autoSave()"></td>';
+                '<td><input type="text" class="row-remark" value="' + rVal + '" placeholder="Notiz" oninput="autoSave()"></td>';
             tbody.appendChild(row);
         }
 
         if (savedData) {
-            document.getElementById('prevMonthCarryover').value = (savedData.prevCarryover !== undefined ? parseFloat(savedData.prevCarryover) : calculateMonthSaldo(getPreviousMonthString(mVal))).toFixed(2);
+            document.getElementById('prevMonthCarryover').value = savedData.prevCarryover !== undefined ? parseFloat(savedData.prevCarryover) : 0.00;
             if (savedData.sigDate) document.getElementById('sigDate').value = savedData.sigDate;
             if (savedData.signatureImage) { 
                 const img = new Image(); 
@@ -337,7 +291,7 @@
                 img.src = savedData.signatureImage; 
             }
         } else {
-            document.getElementById('prevMonthCarryover').value = calculateMonthSaldo(getPreviousMonthString(mVal)).toFixed(2);
+            document.getElementById('prevMonthCarryover').value = "0.00";
         }
 
         calculateAllRows();
@@ -386,17 +340,19 @@
     }
 
     function saveProfile() {
-        localStorage.setItem('zeitnachweis_app_profile', JSON.stringify({
-            empName: document.getElementById('empName').value, empId: document.getElementById('empId').value,
-            dept: document.getElementById('dept').value, dailyTarget: document.getElementById('dailyTarget').value
+        localStorage.setItem('zeitnachweis_global_profile', JSON.stringify({
+            empName: document.getElementById('empName').value, 
+            empId: document.getElementById('empId').value,
+            dept: document.getElementById('dept').value, 
+            dailyTarget: document.getElementById('dailyTarget').value
         }));
     }
 
     function loadProfile() {
-        const p = JSON.parse(localStorage.getItem('zeitnachweis_app_profile') || '{}');
-        if (p.empName) document.getElementById('empName').value = p.empName;
-        if (p.empId) document.getElementById('empId').value = p.empId;
-        if (p.dept) document.getElementById('dept').value = p.dept;
+        const p = JSON.parse(localStorage.getItem('zeitnachweis_global_profile') || '{}');
+        if (p.empName !== undefined) document.getElementById('empName').value = p.empName;
+        if (p.empId !== undefined) document.getElementById('empId').value = p.empId;
+        if (p.dept !== undefined) document.getElementById('dept').value = p.dept;
         if (p.dailyTarget !== undefined) document.getElementById('dailyTarget').value = p.dailyTarget;
     }
 
@@ -412,7 +368,12 @@
                 remark: r.querySelector('.row-remark').value 
             });
         });
-        localStorage.setItem(getStorageKey(), JSON.stringify({ prevCarryover: document.getElementById('prevMonthCarryover').value, sigDate: document.getElementById('sigDate').value, signatureImage: isCanvasBlank ? null : canvas.toDataURL(), rows }));
+        localStorage.setItem(getStorageKey(), JSON.stringify({ 
+            prevCarryover: document.getElementById('prevMonthCarryover').value, 
+            sigDate: document.getElementById('sigDate').value, 
+            signatureImage: isCanvasBlank ? null : canvas.toDataURL(), 
+            rows 
+        }));
         if (!silent) showToast('✓ Gespeichert!');
     }
 
@@ -430,7 +391,7 @@
                 navigator.share({
                     files: [file],
                     title: 'Zeitnachweis Senden & Sichern',
-                    text: 'Hier ist der Zeitnachweis.'
+                    text: 'Hier ist der aktuelle Zeitnachweis.'
                 }).catch(() => {});
             } else {
                 downloadBlob(blob, fileName);
@@ -441,8 +402,41 @@
         });
     }
 
+    function exportBackup() {
+        saveData(true);
+        const data = {
+            profile: JSON.parse(localStorage.getItem('zeitnachweis_global_profile') || '{}'),
+            monthData: JSON.parse(localStorage.getItem(getStorageKey()) || '{}'),
+            monthKey: getStorageKey()
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        downloadBlob(blob, `Backup_Zeitnachweis_${document.getElementById('monthPicker').value}.json`);
+        showToast('✓ Backup exportiert');
+    }
+
     function deleteData() {
-        if (confirm('Wirklich zurücksetzen?')) { localStorage.removeItem(getStorageKey()); clearSignature(); initTableAndData(); showToast('Zurückgesetzt.'); }
+        const mVal = document.getElementById('monthPicker').value;
+        const confirmMsg = `ACHTUNG: Möchten Sie wirklich alle eingetragenen Arbeitszeiten und Daten für den Monat (${mVal}) zurücksetzen?\n\nIhre Stammdaten (Name, Personalnummer etc.) bleiben dabei erhalten!`;
+        
+        if (confirm(confirmMsg)) { 
+            // 1. Temporär Initialisierung blockieren, damit kein AutoSave dazwischenfunkt
+            isInitialized = false;
+
+            // 2. Aus Speicher löschen
+            localStorage.removeItem(getStorageKey()); 
+            
+            // 3. Formularfelder für den Monat manuell auf Standardwerte zurücksetzen
+            document.getElementById('prevMonthCarryover').value = "0.00";
+            clearSignature();
+            
+            // 4. Tabelle komplett neu aufbauen (leert alle Eingaben in der Ansicht)
+            initTableAndData(); 
+
+            // 5. Initialisierung wieder freigeben
+            isInitialized = true;
+
+            showToast('Monat wurde komplett zurückgesetzt!'); 
+        }
     }
 
     function generatePDFBlob() {
