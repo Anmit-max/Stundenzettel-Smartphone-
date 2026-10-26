@@ -28,7 +28,7 @@
         .btn-accent { background: var(--success); }
         .container { max-width: 900px; margin: 0 auto; padding: 10px; background-color: var(--bg-body); }
         
-        /* PDF-Optimierung: Verhindert unsaubere Umbrüche und Abschitte */
+        /* PDF-Optimierung */
         #pdfContent { page-break-inside: avoid; }
         .card { background: var(--card-bg); border-radius: var(--radius-lg); padding: 12px; margin-bottom: 12px; box-shadow: var(--shadow-sm); border: 1px solid rgba(226, 232, 240, 0.8); page-break-inside: avoid; break-inside: avoid; }
         
@@ -153,9 +153,13 @@
     </div>
 </div>
 
+<!-- Unsichtbares File-Input Element für den Import -->
+<input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="handleImportFile(event)">
+
 <div class="mobile-bottom-bar no-print">
     <button class="bar-btn highlight-btn" onclick="saveAndShareData()"><span class="icon">💾</span><span>Speichern & Senden</span></button>
-    <button class="bar-btn" onclick="exportBackup()"><span class="icon">📦</span><span>Backup</span></button>
+    <button class="bar-btn" onclick="exportBackup()"><span class="icon">📦</span><span>Export</span></button>
+    <button class="bar-btn" onclick="document.getElementById('importFileInput').click()"><span class="icon">📥</span><span>Import</span></button>
     <button class="bar-btn" onclick="generatePDFBlob().then(b => downloadBlob(b, `Zeitnachweis_${document.getElementById('empName').value || 'Mitarbeiter'}.pdf`))"><span class="icon">📄</span><span>PDF</span></button>
     <button class="bar-btn" style="color: var(--danger);" onclick="deleteData()"><span class="icon">🗑️</span><span>Reset</span></button>
 </div>
@@ -420,6 +424,39 @@
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         downloadBlob(blob, `Backup_Zeitnachweis_${document.getElementById('monthPicker').value}.json`);
         showToast('✓ Backup exportiert');
+    }
+
+    function handleImportFile(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (data.profile) {
+                    localStorage.setItem('zeitnachweis_global_profile', JSON.stringify(data.profile));
+                }
+                if (data.monthKey && data.monthData) {
+                    localStorage.setItem(data.monthKey, JSON.stringify(data.monthData));
+                    // Monatsauswahl auf den importierten Monat setzen, falls möglich
+                    const mKeyPart = data.monthKey.replace('v4_zeiterfassung_', '');
+                    if (mKeyPart && mKeyPart.length === 7) {
+                        document.getElementById('monthPicker').value = mKeyPart;
+                    }
+                }
+                
+                // Ansicht und Daten neu laden
+                loadProfile();
+                initTableAndData();
+                showToast('✓ Backup erfolgreich wiederhergestellt!');
+            } catch (err) {
+                alert('Fehler beim Einlesen der Backup-Datei. Ist es eine gültige JSON-Datei?');
+            }
+        };
+        reader.readAsText(file);
+        // Reset File-Input damit dieselbe Datei erneut gewählt werden kann
+        event.target.value = '';
     }
 
     function deleteData() {
