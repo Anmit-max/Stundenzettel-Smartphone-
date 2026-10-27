@@ -82,7 +82,7 @@
         .btn-clear { background: rgba(220, 38, 38, 0.1); color: var(--danger); border: 1px solid rgba(220, 38, 38, 0.2); font-size: 10px; font-weight: 600; padding: 3px 6px; border-radius: var(--radius-sm); cursor: pointer; }
         .signature-line { border-top: 1px solid var(--text); text-align: center; padding-top: 4px; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-top: 4px; }
         
-        .mobile-bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border-top: 1px solid #e2e8f0; padding: 6px 8px; display: flex; justify-content: space-around; align-items: center; z-index: 999; }
+        .mobile-bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border-top: 1px solid #e2e8f0; padding: 6px 8px; display: flex; justify-space-around; align-items: center; z-index: 999; }
         .bar-btn { display: flex; flex-direction: column; align-items: center; gap: 1px; background: none; border: none; color: var(--text-muted); font-size: 10px; font-weight: 600; cursor: pointer; padding: 2px 4px; }
         .bar-btn.highlight-btn { color: var(--success); font-weight: 700; }
         .bar-btn span.icon { font-size: 16px; }
@@ -245,6 +245,67 @@
         return 'v4_zeiterfassung_' + month; 
     }
 
+    function getPreviousMonthKey(mVal) {
+        if (!mVal || mVal.indexOf('-') === -1) return null;
+        const p = mVal.split('-');
+        let y = parseInt(p[0], 10);
+        let m = parseInt(p[1], 10);
+        m--;
+        if (m < 1) {
+            m = 12;
+            y--;
+        }
+        const mm = m < 10 ? '0' + m : '' + m;
+        return 'v4_zeiterfassung_' + y + '-' + mm;
+    }
+
+    function calculateMonthEndSaldo(monthData) {
+        if (!monthData || !monthData.rows) return 0;
+        const target = parseFloat(document.getElementById('dailyTarget').value) || 8.0;
+        const prevCarryover = parseFloat(monthData.prevCarryover) || 0.0;
+        let ist = 0;
+        let soll = 0;
+
+        monthData.rows.forEach(r => {
+            let wh = 0;
+            const type = r.type || 'WORK';
+            if ((type === 'WORK' || type === 'FREI') && r.startTime && r.endTime) {
+                const st = new Date('1970-01-01T' + r.startTime + ':00');
+                const et = new Date('1970-01-01T' + r.endTime + ':00');
+                let diff = et - st;
+                if (diff < 0) diff += 86400000;
+                let raw = diff / 3600000;
+                let pause = raw > 9 ? 45 : (raw > 6 ? 30 : 0);
+                wh = Math.max(0, (diff / 60000) - pause) / 60;
+            } else if (['URLAUB', 'KRANK', 'FEIERTAG'].includes(type)) {
+                wh = target;
+            }
+            ist += wh;
+
+            if (r.day && monthData.monthKey) {
+                const p = monthData.monthKey.replace('v4_zeiterfassung_', '').split('-');
+                if (p.length === 2) {
+                    const dt = new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(r.day, 10));
+                    const isWk = (dt.getDay() === 0 || dt.getDay() === 6);
+                    if (!isWk && type !== 'FREI') soll += target;
+                }
+            } else {
+                if (type !== 'FREI') soll += target;
+            }
+        });
+
+        return (ist - soll) + prevCarryover;
+    }
+
+    function getCalculatedPrevMonthCarryover(currentMonthVal) {
+        const prevKey = getPreviousMonthKey(currentMonthVal);
+        if (!prevKey) return 0.00;
+        const prevData = JSON.parse(localStorage.getItem(prevKey) || 'null');
+        if (!prevData) return 0.00;
+        prevData.monthKey = prevKey;
+        return calculateMonthEndSaldo(prevData);
+    }
+
     function onMonthChange() { initTableAndData(); }
 
     function initTableAndData() {
@@ -294,8 +355,8 @@
             tbody.appendChild(row);
         }
 
-        if (savedData) {
-            document.getElementById('prevMonthCarryover').value = savedData.prevCarryover !== undefined ? parseFloat(savedData.prevCarryover) : 0.00;
+        if (savedData && savedData.prevCarryover !== undefined) {
+            document.getElementById('prevMonthCarryover').value = parseFloat(savedData.prevCarryover).toFixed(2);
             if (savedData.sigDate) document.getElementById('sigDate').value = savedData.sigDate;
             if (savedData.signatureImage) { 
                 const img = new Image(); 
@@ -303,7 +364,8 @@
                 img.src = savedData.signatureImage; 
             }
         } else {
-            document.getElementById('prevMonthCarryover').value = "0.00";
+            const autoCarryover = getCalculatedPrevMonthCarryover(mVal);
+            document.getElementById('prevMonthCarryover').value = autoCarryover.toFixed(2);
         }
 
         calculateAllRows();
@@ -439,14 +501,11 @@
                 }
                 if (data.monthKey && data.monthData) {
                     localStorage.setItem(data.monthKey, JSON.stringify(data.monthData));
-                    // Monatsauswahl auf den importierten Monat setzen, falls möglich
                     const mKeyPart = data.monthKey.replace('v4_zeiterfassung_', '');
                     if (mKeyPart && mKeyPart.length === 7) {
                         document.getElementById('monthPicker').value = mKeyPart;
                     }
                 }
-                
-                // Ansicht und Daten neu laden
                 loadProfile();
                 initTableAndData();
                 showToast('✓ Backup erfolgreich wiederhergestellt!');
@@ -455,7 +514,6 @@
             }
         };
         reader.readAsText(file);
-        // Reset File-Input damit dieselbe Datei erneut gewählt werden kann
         event.target.value = '';
     }
 
@@ -466,7 +524,8 @@
         if (confirm(confirmMsg)) { 
             isInitialized = false;
             localStorage.removeItem(getStorageKey()); 
-            document.getElementById('prevMonthCarryover').value = "0.00";
+            const autoCarryover = getCalculatedPrevMonthCarryover(mVal);
+            document.getElementById('prevMonthCarryover').value = autoCarryover.toFixed(2);
             clearSignature();
             initTableAndData(); 
             isInitialized = true;
