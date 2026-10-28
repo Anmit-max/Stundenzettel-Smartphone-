@@ -82,7 +82,7 @@
         .btn-clear { background: rgba(220, 38, 38, 0.1); color: var(--danger); border: 1px solid rgba(220, 38, 38, 0.2); font-size: 10px; font-weight: 600; padding: 3px 6px; border-radius: var(--radius-sm); cursor: pointer; }
         .signature-line { border-top: 1px solid var(--text); text-align: center; padding-top: 4px; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-top: 4px; }
         
-        .mobile-bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border-top: 1px solid #e2e8f0; padding: 6px 8px; display: flex; justify-space-around; align-items: center; z-index: 999; }
+        .mobile-bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border-top: 1px solid #e2e8f0; padding: 6px 8px; display: flex; justify-content: space-around; align-items: center; z-index: 999; }
         .bar-btn { display: flex; flex-direction: column; align-items: center; gap: 1px; background: none; border: none; color: var(--text-muted); font-size: 10px; font-weight: 600; cursor: pointer; padding: 2px 4px; }
         .bar-btn.highlight-btn { color: var(--success); font-weight: 700; }
         .bar-btn span.icon { font-size: 16px; }
@@ -157,8 +157,8 @@
 <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="handleImportFile(event)">
 
 <div class="mobile-bottom-bar no-print">
-    <button class="bar-btn highlight-btn" onclick="saveAndShareData()"><span class="icon">💾</span><span>Speichern & Senden</span></button>
-    <button class="bar-btn" onclick="exportBackup()"><span class="icon">📦</span><span>Export</span></button>
+    <button class="bar-btn highlight-btn" onclick="saveAndShareData()"><span class="icon">💾</span><span>Speichern</span></button>
+    <button class="bar-btn" onclick="exportBackup()"><span class="icon">📦</span><span>Back-Up</span></button>
     <button class="bar-btn" onclick="document.getElementById('importFileInput').click()"><span class="icon">📥</span><span>Import</span></button>
     <button class="bar-btn" onclick="generatePDFBlob().then(b => downloadBlob(b, `Zeitnachweis_${document.getElementById('empName').value || 'Mitarbeiter'}.pdf`))"><span class="icon">📄</span><span>PDF</span></button>
     <button class="bar-btn" style="color: var(--danger);" onclick="deleteData()"><span class="icon">🗑️</span><span>Reset</span></button>
