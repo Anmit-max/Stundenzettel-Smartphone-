@@ -76,45 +76,25 @@
             border-radius: var(--radius-lg); 
             box-shadow: var(--shadow-sm); 
             border: 1px solid rgba(226, 232, 240, 0.8); 
-            overflow-x: auto !important; 
-            -webkit-overflow-scrolling: touch;
+            overflow-x: hidden !important; /* Kein Scrollen mehr nötig, alles passt rein */
             page-break-inside: auto;
             width: 100% !important;
         }
 
-        table { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed; min-width: 650px; }
-        th { background-color: #f1f5f9; color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 9px; padding: 6px 2px; text-align: center; border-bottom: 1px solid var(--border); }
-        td { border-bottom: 1px solid #f1f5f9; padding: 4px 2px; text-align: center; background: #ffffff; }
+        /* Tabelle auf exakte Bildschirmbreite eingepasst */
+        table { width: 100%; border-collapse: collapse; font-size: 9.5px; table-layout: fixed; }
+        th { background-color: #f1f5f9; color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 8px; padding: 5px 1px; text-align: center; border-bottom: 1px solid var(--border); }
+        td { border-bottom: 1px solid #f1f5f9; padding: 3px 1px; text-align: center; background: #ffffff; }
         tr.weekend td { background-color: #f8fafc; color: #94a3b8; }
         tr { page-break-inside: avoid; break-inside: avoid; }
         
-        /* STICKY COLUMNS: Datum und Wochentag bleiben beim horizontalen Scrollen fixiert vorne stehen! */
-        th:nth-child(1), td:nth-child(1) {
-            position: sticky;
-            left: 0;
-            z-index: 2;
-            background-color: #f1f5f9;
-            width: 70px;
-        }
-        td:nth-child(1) { background-color: #ffffff; }
-        tr.weekend td:nth-child(1) { background-color: #f8fafc; }
-
-        th:nth-child(2), td:nth-child(2) {
-            position: sticky;
-            left: 70px;
-            z-index: 2;
-            background-color: #f1f5f9;
-            width: 50px;
-        }
-        td:nth-child(2) { background-color: #ffffff; }
-        tr.weekend td:nth-child(2) { background-color: #f8fafc; }
-        
+        /* Extrem kompakte und passgenaue Eingabefelder für die Spalten */
         input[type="time"], input[type="text"], input[type="number"], input[type="date"], select.type-select { 
-            width: 100% !important; border: 1px solid var(--border); background: #ffffff; text-align: center; font-family: inherit; font-size: 11px; padding: 4px 1px; border-radius: var(--radius-sm); color: var(--text); outline: none; box-sizing: border-box !important;
+            width: 100% !important; border: 1px solid var(--border); background: #ffffff; text-align: center; font-family: inherit; font-size: 9.5px; padding: 2px 0px; border-radius: 4px; color: var(--text); outline: none; box-sizing: border-box !important;
         }
         
-        .pause-display { font-size: 10px; color: var(--text-muted); font-weight: 600; }
-        .work-time { font-weight: 700; color: var(--primary); font-size: 11px; }
+        .pause-display { font-size: 9px; color: var(--text-muted); font-weight: 600; }
+        .work-time { font-weight: 700; color: var(--primary); font-size: 10px; }
         
         .signature-card { margin-top: 12px; page-break-inside: avoid; break-inside: avoid; width: 100% !important; }
         .signature-grid { display: grid; grid-template-columns: 1fr; gap: 10px; width: 100% !important; }
@@ -165,14 +145,14 @@
         <table id="timeTable">
             <thead>
                 <tr>
-                    <th>Datum</th>
-                    <th>Tag</th>
-                    <th style="width: 14%;">Beginn</th>
-                    <th style="width: 14%;">Ende</th>
+                    <th style="width: 14%;">Datum</th>
+                    <th style="width: 8%;">Tag</th>
+                    <th style="width: 13%;">Beginn</th>
+                    <th style="width: 13%;">Ende</th>
                     <th style="width: 10%;">Pause</th>
-                    <th style="width: 11%;">Std.</th>
-                    <th style="width: 16%;">Status</th>
-                    <th style="width: 15%;">Notiz</th>
+                    <th style="width: 10%;">Std.</th>
+                    <th style="width: 18%;">Status</th>
+                    <th style="width: 14%;">Notiz</th>
                 </tr>
             </thead>
             <tbody id="tableBody"></tbody>
