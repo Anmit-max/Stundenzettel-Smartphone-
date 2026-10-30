@@ -28,15 +28,15 @@
         .btn-accent { background: var(--success); }
         .container { max-width: 900px; margin: 0 auto; padding: 10px; background-color: var(--bg-body); }
         
-        /* PDF-Optimierung */
         #pdfContent { page-break-inside: avoid; }
         .card { background: var(--card-bg); border-radius: var(--radius-lg); padding: 12px; margin-bottom: 12px; box-shadow: var(--shadow-sm); border: 1px solid rgba(226, 232, 240, 0.8); page-break-inside: avoid; break-inside: avoid; }
         
         .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
         .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
         .info-group { display: flex; flex-direction: column; gap: 2px; }
+        .info-group.full-width { grid-column: span 2; }
         .info-group label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
-        .info-group input, .info-group select { padding: 8px 8px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 13px; background: #f8fafc; color: var(--text); font-weight: 500; outline: none; }
+        .info-group input, .info-group select { padding: 8px 8px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 13px; background: #f8fafc; color: var(--text); font-weight: 500; outline: none; width: 100%; min-height: 36px; }
         
         .summary-dashboard {
             display: grid;
@@ -52,22 +52,25 @@
         .summary-card .title { font-size: 9px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; }
         .summary-card .value { font-size: 12px; font-weight: 800; color: var(--primary); margin-top: 1px; }
         
+        /* Farbklasse für Minusstunden */
+        .summary-card .value.negative { color: var(--danger) !important; }
+
         .time-table-container { 
             background: var(--card-bg); 
             border-radius: var(--radius-lg); 
             box-shadow: var(--shadow-sm); 
             border: 1px solid rgba(226, 232, 240, 0.8); 
-            overflow: hidden; 
+            overflow-x: auto; 
             page-break-inside: auto;
         }
 
-        table { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed; }
-        th { background-color: #f1f5f9; color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 9px; padding: 6px 2px; text-align: center; border-bottom: 1px solid var(--border); overflow: hidden; }
-        td { border-bottom: 1px solid #f1f5f9; padding: 4px 2px; text-align: center; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed; min-width: 600px; }
+        th { background-color: #f1f5f9; color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 9px; padding: 6px 2px; text-align: center; border-bottom: 1px solid var(--border); }
+        td { border-bottom: 1px solid #f1f5f9; padding: 4px 2px; text-align: center; }
         tr { page-break-inside: avoid; break-inside: avoid; }
         tr.weekend { background-color: #f8fafc; color: #94a3b8; }
         
-        input[type="time"], input[type="text"], input[type="number"], input[type="date"], select.type-select { 
+        input[type="time"], input[type="text"], input[type="number"], input[type="date"], input[type="month"], select.type-select { 
             width: 100%; border: 1px solid var(--border); background: #ffffff; text-align: center; font-family: inherit; font-size: 11px; padding: 4px 1px; border-radius: var(--radius-sm); color: var(--text); outline: none; 
         }
         
@@ -103,19 +106,19 @@
     <div class="card">
         <div class="section-title">👤 Stammdaten</div>
         <div class="info-grid">
-            <div class="info-group" style="grid-column: span 2;"><label>Mitarbeiter Name</label><input type="text" id="empName" placeholder="Max Mustermann" oninput="saveProfile(); autoSave();"></div>
+            <div class="info-group full-width"><label>Mitarbeiter Name</label><input type="text" id="empName" placeholder="Max Mustermann" oninput="saveProfile(); autoSave();"></div>
             <div class="info-group"><label>Personal-Nr.</label><input type="text" id="empId" placeholder="12345" oninput="saveProfile(); autoSave();"></div>
-            <div class="info-group"><label>Monat & Jahr</label><input type="month" id="monthPicker" onchange="onMonthChange()"></div>
             <div class="info-group"><label>Abteilung</label><input type="text" id="dept" placeholder="Logistik" oninput="saveProfile(); autoSave();"></div>
+            <div class="info-group full-width"><label>Monat & Jahr</label><input type="month" id="monthPicker" onchange="onMonthChange()"></div>
             <div class="info-group"><label>Soll-Std/Tag</label><input type="number" id="dailyTarget" value="8.0" step="0.5" min="0" oninput="saveProfile(); calculateAllRows(); calculateTotals(); autoSave();"></div>
-            <div class="info-group" style="grid-column: span 2;"><label>Übertrag Vormonat (Std)</label><input type="number" id="prevMonthCarryover" value="0.00" step="0.25" oninput="calculateTotals(); autoSave();"></div>
+            <div class="info-group"><label>Übertrag Vormonat (Std)</label><input type="number" id="prevMonthCarryover" value="0.00" step="0.25" oninput="calculateTotals(); autoSave();"></div>
         </div>
     </div>
     <div class="summary-dashboard">
         <div class="summary-card"><div class="title">Ist</div><div class="value" id="totalIst">0,00</div></div>
         <div class="summary-card"><div class="title">Soll</div><div class="value" id="totalSoll">0,00</div></div>
         <div class="summary-card"><div class="title">Diff</div><div class="value" id="totalDiff">0,00</div></div>
-        <div class="summary-card"><div class="title">Saldo</div><div class="value" id="totalSaldo">0,00</div></div>
+        <div class="summary-card"><div class="title">Gesamt-Saldo</div><div class="value" id="totalSaldo">0,00</div></div>
         <div class="summary-card highlight"><div class="title">Akt. Saldo</div><div class="value" id="currentSaldoToday">0,00</div></div>
         <div class="summary-card"><div class="title">Urlaub/Krank</div><div class="value"><span id="totalUrlaub">0</span>/<span id="totalKrank">0</span> T.</div></div>
     </div>
@@ -137,7 +140,6 @@
         </table>
     </div>
     
-    <!-- UNTERSCHRIFTEN- KARTE -->
     <div class="card signature-card">
         <div class="section-title">✍ Unterschrift</div>
         <div class="signature-grid">
@@ -153,14 +155,13 @@
     </div>
 </div>
 
-<!-- Unsichtbares File-Input Element für den Import -->
 <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="handleImportFile(event)">
 
 <div class="mobile-bottom-bar no-print">
     <button class="bar-btn highlight-btn" onclick="saveAndShareData()"><span class="icon">💾</span><span>Speichern</span></button>
     <button class="bar-btn" onclick="exportBackup()"><span class="icon">📦</span><span>Back-Up</span></button>
     <button class="bar-btn" onclick="document.getElementById('importFileInput').click()"><span class="icon">📥</span><span>Import</span></button>
-    <button class="bar-btn" onclick="generatePDFBlob().then(b => downloadBlob(b, `Zeitnachweis_${document.getElementById('empName').value || 'Mitarbeiter'}.pdf`))"><span class="icon">📄</span><span>PDF</span></button>
+    <button class="bar-btn" onclick="triggerPDFDownload()"><span class="icon">📄</span><span>PDF</span></button>
     <button class="bar-btn" style="color: var(--danger);" onclick="deleteData()"><span class="icon">🗑️</span><span>Reset</span></button>
 </div>
 <div id="statusToast" class="status-toast"></div>
@@ -170,29 +171,33 @@
     let canvas, ctx, isDrawing = false, isCanvasBlank = true;
     let isInitialized = false;
     
-    window.onload = function() {
-        const monthPicker = document.getElementById('monthPicker');
-        if (!monthPicker.value) {
+    window.addEventListener('DOMContentLoaded', function() {
+        try {
+            const monthPicker = document.getElementById('monthPicker');
+            if (!monthPicker.value) {
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                let mm = today.getMonth() + 1;
+                if (mm < 10) mm = '0' + mm;
+                monthPicker.value = yyyy + '-' + mm;
+            }
+
             const today = new Date();
             const yyyy = today.getFullYear();
             let mm = today.getMonth() + 1;
             if (mm < 10) mm = '0' + mm;
-            monthPicker.value = yyyy + '-' + mm;
+            let dd = today.getDate();
+            if (dd < 10) dd = '0' + dd;
+            document.getElementById('sigDate').value = yyyy + '-' + mm + '-' + dd;
+            
+            initSignatureCanvas(); 
+            loadProfile(); 
+            initTableAndData();
+            isInitialized = true;
+        } catch (err) {
+            console.error("Initialization Error:", err);
         }
-
-        const today = new Date();
-        const yyyy = today.getFullYear();
-        let mm = today.getMonth() + 1;
-        if (mm < 10) mm = '0' + mm;
-        let dd = today.getDate();
-        if (dd < 10) dd = '0' + dd;
-        document.getElementById('sigDate').value = yyyy + '-' + mm + '-' + dd;
-        
-        initSignatureCanvas(); 
-        loadProfile(); 
-        initTableAndData();
-        isInitialized = true;
-    };
+    });
 
     function initSignatureCanvas() {
         canvas = document.getElementById('sigCanvas'); 
@@ -259,68 +264,74 @@
         return 'v4_zeiterfassung_' + y + '-' + mm;
     }
 
-    function calculateMonthEndSaldo(monthData) {
-        if (!monthData || !monthData.rows) return 0;
-        const target = parseFloat(document.getElementById('dailyTarget').value) || 8.0;
-        const prevCarryover = parseFloat(monthData.prevCarryover) || 0.0;
-        let ist = 0;
-        let soll = 0;
-
-        monthData.rows.forEach(r => {
-            let wh = 0;
-            const type = r.type || 'WORK';
-            if ((type === 'WORK' || type === 'FREI') && r.startTime && r.endTime) {
-                const st = new Date('1970-01-01T' + r.startTime + ':00');
-                const et = new Date('1970-01-01T' + r.endTime + ':00');
-                let diff = et - st;
-                if (diff < 0) diff += 86400000;
-                let raw = diff / 3600000;
-                let pause = raw > 9 ? 45 : (raw > 6 ? 30 : 0);
-                wh = Math.max(0, (diff / 60000) - pause) / 60;
-            } else if (['URLAUB', 'KRANK', 'FEIERTAG'].includes(type)) {
-                wh = target;
-            }
-            ist += wh;
-
-            if (r.day && monthData.monthKey) {
-                const p = monthData.monthKey.replace('v4_zeiterfassung_', '').split('-');
-                if (p.length === 2) {
-                    const dt = new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(r.day, 10));
-                    const isWk = (dt.getDay() === 0 || dt.getDay() === 6);
-                    if (!isWk && type !== 'FREI') soll += target;
-                }
-            } else {
-                if (type !== 'FREI') soll += target;
-            }
-        });
-
-        return (ist - soll) + prevCarryover;
-    }
-
     function getCalculatedPrevMonthCarryover(currentMonthVal) {
         const prevKey = getPreviousMonthKey(currentMonthVal);
         if (!prevKey) return 0.00;
         const prevData = JSON.parse(localStorage.getItem(prevKey) || 'null');
         if (!prevData) return 0.00;
-        prevData.monthKey = prevKey;
-        return calculateMonthEndSaldo(prevData);
+        
+        const target = parseFloat(document.getElementById('dailyTarget').value) || 8.0;
+        const prevCarryover = parseFloat(prevData.prevCarryover) || 0.0;
+        
+        const pParts = prevKey.replace('v4_zeiterfassung_', '').split('-');
+        if (pParts.length !== 2) return prevCarryover;
+        const prevYear = parseInt(pParts[0], 10);
+        const prevMonth = parseInt(pParts[1], 10);
+
+        let istSum = 0;
+        let sollSum = 0;
+
+        if (prevData.rows) {
+            prevData.rows.forEach(r => {
+                let wh = 0;
+                const type = r.type || 'WORK';
+                const day = parseInt(r.day, 10);
+                
+                if ((type === 'WORK' || type === 'FREI') && r.startTime && r.endTime) {
+                    const st = new Date('1970-01-01T' + r.startTime + ':00');
+                    const et = new Date('1970-01-01T' + r.endTime + ':00');
+                    let diff = et - st;
+                    if (diff < 0) diff += 86400000;
+                    let raw = diff / 3600000;
+                    let pause = raw > 9 ? 45 : (raw > 6 ? 30 : 0);
+                    wh = Math.max(0, (diff / 60000) - pause) / 60;
+                } else if (['URLAUB', 'KRANK', 'FEIERTAG'].includes(type)) {
+                    wh = target;
+                }
+
+                const dt = new Date(prevYear, prevMonth - 1, day);
+                const isWk = (dt.getDay() === 0 || dt.getDay() === 6);
+
+                istSum += wh;
+                if (!isWk && type !== 'FREI') sollSum += target;
+            });
+        }
+
+        return (istSum - sollSum) + prevCarryover;
     }
 
     function onMonthChange() { initTableAndData(); }
 
     function initTableAndData() {
         const monthPicker = document.getElementById('monthPicker');
-        if (!monthPicker.value) {
+        if (!monthPicker) return;
+        
+        let mVal = monthPicker.value;
+        if (!mVal) {
             const today = new Date();
             const yyyy = today.getFullYear();
             let mm = today.getMonth() + 1;
             if (mm < 10) mm = '0' + mm;
-            monthPicker.value = yyyy + '-' + mm;
+            mVal = yyyy + '-' + mm;
+            monthPicker.value = mVal;
         }
 
-        const mVal = monthPicker.value;
-        const p = mVal.split('-'); let y = parseInt(p[0], 10), mo = parseInt(p[1], 10);
-        const days = new Date(y, mo, 0).getDate(), tbody = document.getElementById('tableBody'); 
+        const p = mVal.split('-'); 
+        let y = parseInt(p[0], 10), mo = parseInt(p[1], 10);
+        if (isNaN(y) || isNaN(mo)) return;
+
+        const days = new Date(y, mo, 0).getDate();
+        const tbody = document.getElementById('tableBody'); 
         if (!tbody) return;
         tbody.innerHTML = '';
         
@@ -328,8 +339,11 @@
         clearSignature();
 
         for (let d = 1; d <= days; d++) {
-            const dt = new Date(y, mo - 1, d), isWk = (dt.getDay() === 0 || dt.getDay() === 6);
-            const row = document.createElement('tr'); if (isWk) row.classList.add('weekend'); row.dataset.day = d;
+            const dt = new Date(y, mo - 1, d);
+            const isWk = (dt.getDay() === 0 || dt.getDay() === 6);
+            const row = document.createElement('tr'); 
+            if (isWk) row.classList.add('weekend'); 
+            row.dataset.day = d;
             
             let sVal = '', eVal = '', tVal = 'WORK', rVal = '';
             if (savedData && savedData.rows && savedData.rows[d - 1]) {
@@ -341,8 +355,8 @@
 
             row.innerHTML = '<td>' + (d < 10 ? '0' + d : d) + '.' + (mo < 10 ? '0' + mo : mo) + '.</td>' +
                 '<td><b>' + daysOfWeek[dt.getDay()] + '</b></td>' +
-                '<td><input type="time" class="start-time" value="' + sVal + '" onchange="calculateRow(this); autoSave();"></td>' +
-                '<td><input type="time" class="end-time" value="' + eVal + '" onchange="calculateRow(this); autoSave();"></td>' +
+                '<td><input type="time" class="start-time" value="' + sVal + '" oninput="calculateRow(this); autoSave();"></td>' +
+                '<td><input type="time" class="end-time" value="' + eVal + '" oninput="calculateRow(this); autoSave();"></td>' +
                 '<td><span class="pause-display">0m</span></td><td class="work-time">0,00</td>' +
                 '<td><select class="type-select" onchange="calculateRow(this); autoSave();">' +
                 '<option value="WORK" ' + (tVal === 'WORK' ? 'selected' : '') + '>Arbeit</option>' +
@@ -387,6 +401,18 @@
 
     function calculateAllRows() { document.querySelectorAll('#tableBody tr').forEach(r => { const sel = r.querySelector('.type-select'); if (sel) calculateRow(sel); }); }
 
+    function updateValueWithColor(elementId, value) {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+        const formatted = (value >= 0 ? '+' : '') + value.toFixed(2).replace('.', ',');
+        el.innerText = formatted;
+        if (value < 0) {
+            el.classList.add('negative');
+        } else {
+            el.classList.remove('negative');
+        }
+    }
+
     function calculateTotals() {
         const rows = document.querySelectorAll('#tableBody tr'), target = parseFloat(document.getElementById('dailyTarget').value) || 0;
         const prev = parseFloat(document.getElementById('prevMonthCarryover').value) || 0;
@@ -399,16 +425,30 @@
             let type = r.querySelector('.type-select').value, wh = parseFloat(r.querySelector('.work-time').innerText.replace(',', '.')) || 0;
             ist += wh; if (!isWk && type !== 'FREI') soll += target;
             if (type === 'URLAUB') urlaub++; if (type === 'KRANK') krank++;
-            if (sY < today.getFullYear() || (sY === today.getFullYear() && sM < today.getMonth() + 1) || (sY === today.getFullYear() && sM === today.getMonth() + 1 && day <= today.getDate())) {
+            
+            if (sY < today.getFullYear() || 
+               (sY === today.getFullYear() && sM < today.getMonth() + 1) || 
+               (sY === today.getFullYear() && sM === today.getMonth() + 1 && day <= today.getDate())) {
                 istToday += wh; if (!isWk && type !== 'FREI') sollToday += target;
             }
         });
-        let diff = ist - soll, totalS = diff + prev, curS = (istToday - sollToday) + prev;
+
+        let diff = ist - soll;
+        
+        // REINES GESAMT-SALDO FÜR DIESEN MONAT (OHNE VORMONATSÜBERTRAG)
+        let totalSaldoMonat = diff; 
+        
+        // AKT. SALDO DIESES MONATS BIS HEUTE (INKLUSIVE VORMONATSÜBERTRAG)
+        let curS = (istToday - sollToday) + prev;
+
         document.getElementById('totalIst').innerText = ist.toFixed(2).replace('.', ',');
         document.getElementById('totalSoll').innerText = soll.toFixed(2).replace('.', ',');
-        document.getElementById('totalDiff').innerText = (diff >= 0 ? '+' : '') + diff.toFixed(2).replace('.', ',');
-        document.getElementById('totalSaldo').innerText = (totalS >= 0 ? '+' : '') + totalS.toFixed(2).replace('.', ',');
-        const cS = document.getElementById('currentSaldoToday'); if (cS) cS.innerText = (curS >= 0 ? '+' : '') + curS.toFixed(2).replace('.', ',');
+        
+        // FARBLICHE ANPASSUNG BEI NEUTRALEN/POSITIVEN/NEGATIVEN WERTEN
+        updateValueWithColor('totalDiff', diff);
+        updateValueWithColor('totalSaldo', totalSaldoMonat);
+        updateValueWithColor('currentSaldoToday', curS);
+        
         document.getElementById('totalUrlaub').innerText = urlaub;
         document.getElementById('totalKrank').innerText = krank;
     }
@@ -531,6 +571,10 @@
             isInitialized = true;
             showToast('Monat wurde komplett zurückgesetzt!'); 
         }
+    }
+
+    function triggerPDFDownload() {
+        generatePDFBlob().then(b => downloadBlob(b, `Zeitnachweis_${document.getElementById('empName').value || 'Mitarbeiter'}.pdf`));
     }
 
     function generatePDFBlob() {
