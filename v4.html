@@ -20,7 +20,6 @@
         }
         * { box-sizing: border-box !important; -webkit-tap-highlight-color: transparent; }
         
-        /* Absolutes Riegeln gegen horizontales Scrollen auf dem gesamten Bildschirm */
         html, body { 
             width: 100% !important; 
             max-width: 100vw !important; 
@@ -40,31 +39,20 @@
         .btn-icon { background: rgba(255, 255, 255, 0.15); color: white; border: none; padding: 6px 10px; border-radius: var(--radius-md); font-weight: 600; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px; }
         .btn-accent { background: var(--success); }
         
-        .container { max-width: 900px; width: 100% !important; max-width: 100vw !important; margin: 0 auto; padding: 10px; background-color: var(--bg-body); overflow-x: hidden !important; }
+        .container { max-width: 900px; width: 100% !important; margin: 0 auto; padding: 10px; background-color: var(--bg-body); overflow-x: hidden; }
         
-        #pdfContent { page-break-inside: avoid; width: 100% !important; max-width: 100% !important; overflow-x: hidden !important; }
-        .card { background: var(--card-bg); border-radius: var(--radius-lg); padding: 12px; margin-bottom: 12px; box-shadow: var(--shadow-sm); border: 1px solid rgba(226, 232, 240, 0.8); page-break-inside: avoid; break-inside: avoid; width: 100% !important; max-width: 100% !important; overflow: hidden !important; }
+        #pdfContent { page-break-inside: avoid; width: 100% !important; max-width: 100% !important; overflow-x: hidden; }
+        .card { background: var(--card-bg); border-radius: var(--radius-lg); padding: 12px; margin-bottom: 12px; box-shadow: var(--shadow-sm); border: 1px solid rgba(226, 232, 240, 0.8); page-break-inside: avoid; break-inside: avoid; width: 100% !important; max-width: 100% !important; }
         
         .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
         
-        .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; width: 100% !important; max-width: 100% !important; }
+        .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; width: 100% !important; }
         .info-group { display: flex; flex-direction: column; gap: 2px; width: 100% !important; min-width: 0; }
-        .info-group.full-width { grid-column: span 2; width: 100% !important; max-width: 100% !important; }
+        .info-group.full-width { grid-column: span 2; width: 100% !important; }
         .info-group label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
         .info-group input, .info-group select { 
-            padding: 8px; 
-            border: 1px solid var(--border); 
-            border-radius: var(--radius-md); 
-            font-size: 13px; 
-            background: #f8fafc; 
-            color: var(--text); 
-            font-weight: 500; 
-            outline: none; 
-            width: 100% !important; 
-            max-width: 100% !important; 
-            min-height: 36px; 
-            box-sizing: border-box !important;
+            padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 13px; background: #f8fafc; color: var(--text); font-weight: 500; outline: none; width: 100% !important; max-width: 100% !important; min-height: 36px; box-sizing: border-box !important;
         }
         
         .summary-dashboard {
@@ -75,7 +63,6 @@
             page-break-inside: avoid;
             break-inside: avoid;
             width: 100% !important;
-            max-width: 100% !important;
         }
 
         .summary-card { background: var(--card-bg); border: 1px solid #e2e8f0; border-radius: var(--radius-md); padding: 6px 2px; text-align: center; box-shadow: var(--shadow-sm); min-width: 0; overflow: hidden; }
@@ -93,14 +80,34 @@
             -webkit-overflow-scrolling: touch;
             page-break-inside: auto;
             width: 100% !important;
-            max-width: 100% !important;
         }
 
-        table { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed; min-width: 600px; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed; min-width: 650px; }
         th { background-color: #f1f5f9; color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 9px; padding: 6px 2px; text-align: center; border-bottom: 1px solid var(--border); }
-        td { border-bottom: 1px solid #f1f5f9; padding: 4px 2px; text-align: center; }
+        td { border-bottom: 1px solid #f1f5f9; padding: 4px 2px; text-align: center; background: #ffffff; }
+        tr.weekend td { background-color: #f8fafc; color: #94a3b8; }
         tr { page-break-inside: avoid; break-inside: avoid; }
-        tr.weekend { background-color: #f8fafc; color: #94a3b8; }
+        
+        /* STICKY COLUMNS: Datum und Wochentag bleiben beim horizontalen Scrollen fixiert vorne stehen! */
+        th:nth-child(1), td:nth-child(1) {
+            position: sticky;
+            left: 0;
+            z-index: 2;
+            background-color: #f1f5f9;
+            width: 70px;
+        }
+        td:nth-child(1) { background-color: #ffffff; }
+        tr.weekend td:nth-child(1) { background-color: #f8fafc; }
+
+        th:nth-child(2), td:nth-child(2) {
+            position: sticky;
+            left: 70px;
+            z-index: 2;
+            background-color: #f1f5f9;
+            width: 50px;
+        }
+        td:nth-child(2) { background-color: #ffffff; }
+        tr.weekend td:nth-child(2) { background-color: #f8fafc; }
         
         input[type="time"], input[type="text"], input[type="number"], input[type="date"], select.type-select { 
             width: 100% !important; border: 1px solid var(--border); background: #ffffff; text-align: center; font-family: inherit; font-size: 11px; padding: 4px 1px; border-radius: var(--radius-sm); color: var(--text); outline: none; box-sizing: border-box !important;
@@ -158,8 +165,8 @@
         <table id="timeTable">
             <thead>
                 <tr>
-                    <th style="width: 12%;">Datum</th>
-                    <th style="width: 8%;">Tag</th>
+                    <th>Datum</th>
+                    <th>Tag</th>
                     <th style="width: 14%;">Beginn</th>
                     <th style="width: 14%;">Ende</th>
                     <th style="width: 10%;">Pause</th>
