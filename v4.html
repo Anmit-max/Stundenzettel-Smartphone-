@@ -26,17 +26,19 @@
         .header-actions { display: flex; gap: 6px; }
         .btn-icon { background: rgba(255, 255, 255, 0.15); color: white; border: none; padding: 6px 10px; border-radius: var(--radius-md); font-weight: 600; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px; }
         .btn-accent { background: var(--success); }
-        .container { max-width: 900px; margin: 0 auto; padding: 10px; background-color: var(--bg-body); }
+        .container { max-width: 900px; margin: 0 auto; padding: 10px; background-color: var(--bg-body); width: 100%; overflow-x: hidden; }
         
-        #pdfContent { page-break-inside: avoid; }
-        .card { background: var(--card-bg); border-radius: var(--radius-lg); padding: 12px; margin-bottom: 12px; box-shadow: var(--shadow-sm); border: 1px solid rgba(226, 232, 240, 0.8); page-break-inside: avoid; break-inside: avoid; }
+        #pdfContent { page-break-inside: avoid; width: 100%; }
+        .card { background: var(--card-bg); border-radius: var(--radius-lg); padding: 12px; margin-bottom: 12px; box-shadow: var(--shadow-sm); border: 1px solid rgba(226, 232, 240, 0.8); page-break-inside: avoid; break-inside: avoid; width: 100%; }
         
         .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
-        .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-        .info-group { display: flex; flex-direction: column; gap: 2px; }
+        
+        /* Flexibles, übersichtliches Grid für Stammdaten auf allen Bildschirmgrößen */
+        .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; width: 100%; }
+        .info-group { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
         .info-group.full-width { grid-column: span 2; }
-        .info-group label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
-        .info-group input, .info-group select { padding: 8px 8px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 13px; background: #f8fafc; color: var(--text); font-weight: 500; outline: none; width: 100%; min-height: 36px; }
+        .info-group label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .info-group input, .info-group select { padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 13px; background: #f8fafc; color: var(--text); font-weight: 500; outline: none; width: 100%; min-height: 36px; max-width: 100%; }
         
         .summary-dashboard {
             display: grid;
@@ -51,17 +53,17 @@
         .summary-card.highlight { background: #f0fdf4; border-color: #bbf7d0; }
         .summary-card .title { font-size: 9px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; }
         .summary-card .value { font-size: 12px; font-weight: 800; color: var(--primary); margin-top: 1px; }
-        
-        /* Farbklasse für Minusstunden */
         .summary-card .value.negative { color: var(--danger) !important; }
-
+        
         .time-table-container { 
             background: var(--card-bg); 
             border-radius: var(--radius-lg); 
             box-shadow: var(--shadow-sm); 
             border: 1px solid rgba(226, 232, 240, 0.8); 
             overflow-x: auto; 
+            -webkit-overflow-scrolling: touch;
             page-break-inside: auto;
+            width: 100%;
         }
 
         table { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed; min-width: 600px; }
@@ -79,7 +81,7 @@
         
         .signature-card { margin-top: 12px; page-break-inside: avoid; break-inside: avoid; }
         .signature-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
-        .signature-canvas-container { position: relative; border: 1px dashed var(--border); border-radius: var(--radius-md); background: #f8fafc; touch-action: none; }
+        .signature-canvas-container { position: relative; border: 1px dashed var(--border); border-radius: var(--radius-md); background: #f8fafc; touch-action: none; width: 100%; }
         #sigCanvas { width: 100%; height: 100px; display: block; border-radius: var(--radius-md); cursor: crosshair; }
         .canvas-actions { position: absolute; top: 4px; right: 4px; }
         .btn-clear { background: rgba(220, 38, 38, 0.1); color: var(--danger); border: 1px solid rgba(220, 38, 38, 0.2); font-size: 10px; font-weight: 600; padding: 3px 6px; border-radius: var(--radius-sm); cursor: pointer; }
@@ -434,17 +436,12 @@
         });
 
         let diff = ist - soll;
-        
-        // REINES GESAMT-SALDO FÜR DIESEN MONAT (OHNE VORMONATSÜBERTRAG)
         let totalSaldoMonat = diff; 
-        
-        // AKT. SALDO DIESES MONATS BIS HEUTE (INKLUSIVE VORMONATSÜBERTRAG)
         let curS = (istToday - sollToday) + prev;
 
         document.getElementById('totalIst').innerText = ist.toFixed(2).replace('.', ',');
         document.getElementById('totalSoll').innerText = soll.toFixed(2).replace('.', ',');
         
-        // FARBLICHE ANPASSUNG BEI NEUTRALEN/POSITIVEN/NEGATIVEN WERTEN
         updateValueWithColor('totalDiff', diff);
         updateValueWithColor('totalSaldo', totalSaldoMonat);
         updateValueWithColor('currentSaldoToday', curS);
